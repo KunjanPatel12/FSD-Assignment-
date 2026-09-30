@@ -13,7 +13,6 @@ export const registerSchema = z
       .regex(/[0-9]/, 'Password must contain at least one number.')
       .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character.'),
     confirmPassword: z.string().optional(),
-    role: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -50,4 +49,6 @@ export const profileSchema = z.object({
   monthlySupplementBudget: z.coerce.number().min(0).optional(),
   dietaryPreferences: z.string().max(200).optional(),
   healthNotes: z.string().max(300).optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(60).optional(),
+  phone: z.string().max(25).optional().nullable(),
 });

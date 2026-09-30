@@ -14,6 +14,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import supplementRoutes from './routes/supplementRoutes.js';
 import trainerRoutes from './routes/trainerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import membershipRoutes from './routes/membershipRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 export const createApp = () => {
@@ -65,6 +66,7 @@ export const createApp = () => {
   app.use('/api/supplements', supplementRoutes);
   app.use('/api/trainer', trainerRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/membership', membershipRoutes);
 
   // 404 & Centralized Error Handlers
   app.use(notFound);

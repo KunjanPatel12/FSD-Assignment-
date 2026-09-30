@@ -13,17 +13,17 @@ FitPulse is a production-minded full-stack web application designed for gym memb
 
 ---
 
-## 2. Pre-Seeded Interactive Demo Accounts
+## 2. Role-Based Access Control & User Accounts
 
-All demo accounts use password: **`DemoPassword123!`** (configured in `.env`).
+FitPulse enforces server-side role-based authorization across three distinct personas:
 
-| Role | Demo Email | Access Permissions & Responsibilities |
+| Role | Access Permissions & Responsibilities | Provisioning Method |
 |---|---|---|
-| **Member** | `member@fitpulse.local` | 4-Day Muscle Gain split, 7-day streak, check-in, set logger, metrics |
-| **Trainer** | `trainer@fitpulse.local` | Head Coach portal, athlete inspection, custom plan assignments |
-| **Admin** | `admin@fitpulse.local` | Facility schedule management, user roles, security audit logs |
+| **Member** | 4-Day Muscle Gain split, streaks, check-in, set logger, consistency metrics | Self-service registration (`/register`) |
+| **Trainer** | Coach athlete portal, athlete inspection, custom plan assignments | Assigned by Gym Administrator |
+| **Admin** | Facility schedule management, user roles, security audit logs | Controlled administrative bootstrap / Admin console |
 
-> **Quick Login**: The Login screen features 1-click demo fill buttons to test any role instantly without typing.
+> **Secure Registration**: All public visitors register directly as Gym Members. The backend strictly enforces `role: 'member'` on registration. Privileged roles (Trainer and Admin) are assigned securely by administrators via the Admin User Management panel.
 
 ---
 

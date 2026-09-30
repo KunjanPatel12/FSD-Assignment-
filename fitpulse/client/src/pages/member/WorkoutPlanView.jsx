@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dumbbell,
-  Clock,
   RotateCcw,
-  Sparkles,
   CheckCircle2,
-  Info,
   ShieldAlert,
-  ChevronRight,
+  Layers,
+  Repeat,
+  Clock,
 } from 'lucide-react';
 import { workoutApi, exerciseApi } from '../../services/api';
-import { Button } from '../../components/common/Button';
-import { Card } from '../../components/common/Card';
+import { ExerciseIllustration } from '../../components/common/ExerciseIllustration';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
@@ -99,132 +97,146 @@ export const WorkoutPlanView = () => {
   const currentDay = plan?.days?.find((d) => d.dayNumber === selectedDayNumber);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 bg-white">
+      {/* Top Breadcrumb Tag matching reference */}
+      <div className="flex items-center gap-2">
+        <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 text-[11px] font-bold uppercase tracking-wider">
+          {plan?.level?.toUpperCase() || 'INTERMEDIATE'} ROUTINE
+        </span>
+        <span className="text-slate-300">•</span>
+        <span className="text-xs text-slate-500 font-medium capitalize">
+          {plan?.goal?.replace('_', ' ') || 'Muscle Gain'} Focus
+        </span>
+      </div>
+
+      {/* Title & Action Row matching reference */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Badge variant="emerald">{plan?.level?.toUpperCase()} ROUTINE</Badge>
-            <span className="text-slate-600">•</span>
-            <span className="text-xs text-slate-400 capitalize">
-              {plan?.goal?.replace('_', ' ')} Focus
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            {plan?.title || 'Personalized Workout Plan'}
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Your Workout Plan
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Deterministic {plan?.daysPerWeek || 3}-day weekly split structured from your onboarding parameters.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            A structured {plan?.daysPerWeek || 4}-day weekly split designed from your fitness profile. Follow the exercises with proper form and stay consistent to achieve your goals.
           </p>
         </div>
 
-        <Button
+        <button
           onClick={handleRegeneratePlan}
-          isLoading={generating}
-          variant="outline"
-          size="sm"
-          leftIcon={<RotateCcw className="w-4 h-4" />}
+          disabled={generating}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors shrink-0"
         >
-          Regenerate Routine
-        </Button>
+          <RotateCcw className={`w-3.5 h-3.5 text-slate-600 ${generating ? 'animate-spin' : ''}`} />
+          <span>Regenerate Routine</span>
+        </button>
       </div>
 
-      {/* Days Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      {/* Day Tabs matching reference */}
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-1 pt-2">
         {plan?.days?.map((day) => (
           <button
             key={day.dayNumber}
             onClick={() => setSelectedDayNumber(day.dayNumber)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
               selectedDayNumber === day.dayNumber
-                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-white border border-gray-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <span>Day {day.dayNumber}</span>
-            <span className="text-[10px] opacity-80 font-normal">
-              ({day.exercises.length} Ex.)
-            </span>
+            Day {day.dayNumber} <span className="font-normal opacity-85 text-[11px]">({day.exercises.length} Ex)</span>
           </button>
         ))}
       </div>
 
-      {/* Selected Day View */}
+      {/* Daily Routine Card matching reference */}
       {currentDay && (
-        <div className="space-y-6">
-          <Card className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-800">
+        <div className="bg-white border border-emerald-100 rounded-2xl p-6 sm:p-7 shadow-xs">
+          {/* Card header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                <Dumbbell className="w-6 h-6" />
+              </div>
               <div>
-                <h3 className="text-lg font-bold text-white">{currentDay.dayName}</h3>
-                <p className="text-xs text-emerald-400 font-medium mt-0.5">
+                <h2 className="text-xl font-bold text-slate-900">
+                  {currentDay.dayName}
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Focus: {currentDay.focus}
                 </p>
               </div>
-
-              <Button
-                onClick={handleMarkCompleted}
-                isLoading={completing}
-                variant="primary"
-                size="md"
-                leftIcon={<CheckCircle2 className="w-4 h-4" />}
-              >
-                Mark as Completed
-              </Button>
             </div>
 
-            {/* Exercises List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {currentDay.exercises.map((ex, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition-all space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">
-                        Exercise {i + 1}
+            <button
+              onClick={handleMarkCompleted}
+              disabled={completing}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shrink-0"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Mark as Completed</span>
+            </button>
+          </div>
+
+          {/* Exercise Grid - 2 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {currentDay.exercises.map((ex, i) => (
+              <div
+                key={i}
+                className="bg-[#F4FAF6] border border-emerald-100/70 rounded-xl p-4 flex gap-4 items-center"
+              >
+                {/* Exercise illustration on the left */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-lg p-1 border border-emerald-100/50 flex items-center justify-center shrink-0 overflow-hidden">
+                  <ExerciseIllustration name={ex.exerciseName} muscleGroup={currentDay.focus} />
+                </div>
+
+                {/* Exercise details on the right */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                        {i + 1}
                       </span>
-                      <h4
-                        onClick={() =>
-                          handleOpenExerciseDetails(ex.exerciseId?._id || ex.exerciseId)
-                        }
-                        className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors"
+                      <h3
+                        onClick={() => handleOpenExerciseDetails(ex.exerciseId?._id || ex.exerciseId)}
+                        className="text-sm font-bold text-slate-900 truncate hover:text-emerald-700 cursor-pointer"
+                        title={ex.exerciseName}
                       >
                         {ex.exerciseName}
-                      </h4>
+                      </h3>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs font-mono text-slate-300">
-                    <span className="px-2 py-1 rounded-md bg-slate-900 border border-slate-800">
-                      {ex.sets} Sets
-                    </span>
-                    <span className="px-2 py-1 rounded-md bg-slate-900 border border-slate-800">
-                      {ex.reps} Reps
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {ex.restSeconds}s Rest
+                    <span className="px-2 py-0.5 rounded bg-emerald-100/80 text-emerald-800 text-[10px] font-bold capitalize shrink-0">
+                      {ex.exerciseId?.targetMuscleGroup || currentDay.focus?.split(' ')[0] || 'Chest'}
                     </span>
                   </div>
 
-                  {ex.notes && (
-                    <p className="text-[11px] text-slate-400 italic">
-                      "{ex.notes}"
-                    </p>
-                  )}
+                  {/* Metric pills: Sets, Reps, Rest */}
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-medium">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-gray-200">
+                      <Layers className="w-3 h-3 text-slate-400" /> {ex.sets} Sets
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-gray-200">
+                      <Repeat className="w-3 h-3 text-slate-400" /> {ex.reps} Reps
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white border border-gray-200">
+                      <Clock className="w-3 h-3 text-slate-400" /> {ex.restSeconds} sec Rest
+                    </span>
+                  </div>
+
+                  {/* Short instructions */}
+                  <p className="text-[11px] text-slate-500 mt-2 line-clamp-1">
+                    {ex.notes || 'Keep core braced and perform full range of motion.'}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Medical Disclaimer Banner */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-start gap-3 text-xs text-slate-400">
-        <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+      {/* Disclaimer Banner matching reference */}
+      <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/60 flex items-start gap-3 text-xs text-amber-900">
+        <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <p className="leading-relaxed">
-          <span className="font-bold text-white">Disclaimer:</span> {plan?.medicalDisclaimer ||
-            'This workout program is algorithmically generated based on user input and is for educational/fitness tracking purposes. It does not constitute medical advice. Consult a healthcare professional before training.'}
+          <span className="font-bold text-amber-950">Disclaimer:</span> This workout program is algorithmically generated based on your input and is for educational/fitness tracking purposes. It does not constitute medical advice. Always use proper form and consult a qualified fitness professional if needed.
         </p>
       </div>
 
@@ -244,8 +256,8 @@ export const WorkoutPlanView = () => {
             </div>
 
             <div>
-              <h5 className="font-bold text-white mb-1">Execution Steps:</h5>
-              <ol className="list-decimal list-inside space-y-1 text-slate-300">
+              <h5 className="font-bold text-slate-900 mb-1">Execution Steps:</h5>
+              <ol className="list-decimal list-inside space-y-1 text-slate-600">
                 {selectedExerciseDetail.instructions?.map((step, idx) => (
                   <li key={idx}>{step}</li>
                 ))}
@@ -254,8 +266,8 @@ export const WorkoutPlanView = () => {
 
             {selectedExerciseDetail.formCues?.length > 0 && (
               <div>
-                <h5 className="font-bold text-white mb-1">Key Form Cues:</h5>
-                <ul className="list-disc list-inside space-y-1 text-emerald-300">
+                <h5 className="font-bold text-slate-900 mb-1">Key Form Cues:</h5>
+                <ul className="list-disc list-inside space-y-1 text-emerald-800">
                   {selectedExerciseDetail.formCues.map((cue, idx) => (
                     <li key={idx}>{cue}</li>
                   ))}
@@ -263,8 +275,8 @@ export const WorkoutPlanView = () => {
               </div>
             )}
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
-              <span className="font-bold text-amber-400">Precaution:</span>{' '}
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
+              <span className="font-bold">Precaution:</span>{' '}
               {selectedExerciseDetail.precautions}
             </div>
           </div>

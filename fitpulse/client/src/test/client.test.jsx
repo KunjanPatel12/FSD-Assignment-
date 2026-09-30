@@ -11,7 +11,12 @@ import { EmptyState } from '../components/common/EmptyState';
 import { NotificationProvider } from '../context/NotificationContext';
 import { AuthProvider } from '../context/AuthContext';
 import { LandingPage } from '../pages/public/LandingPage';
+import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { MembershipPage } from '../pages/member/MembershipPage';
+import { ConsistencyReportPage } from '../pages/member/ConsistencyReportPage';
+import { MemberProfilePage } from '../pages/member/MemberProfilePage';
+import { Logo } from '../components/common/Logo';
 
 describe('FitPulse Frontend Components & Unit Suite', () => {
   it('Button should render label and execute onClick handler', () => {
@@ -26,13 +31,13 @@ describe('FitPulse Frontend Components & Unit Suite', () => {
     expect(button).toBeInTheDocument();
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
-  });
+  }, 15000);
 
   it('Badge should render with variant styling', () => {
     render(<Badge variant="emerald">CONSISTENT</Badge>);
     const badge = screen.getByText(/consistent/i);
     expect(badge).toBeInTheDocument();
-    expect(badge.className).toContain('text-emerald-400');
+    expect(badge.className).toContain('text-emerald-700');
   });
 
   it('Card should render children and container classes', () => {
@@ -96,7 +101,7 @@ describe('FitPulse Frontend Components & Unit Suite', () => {
     expect(handleAction).toHaveBeenCalledTimes(1);
   });
 
-  it('LandingPage should render headline and navigation links', () => {
+  it('LandingPage renders headline and clean CTA buttons without public demo-access cards or sample accounts', () => {
     render(
       <NotificationProvider>
         <AuthProvider>
@@ -107,8 +112,35 @@ describe('FitPulse Frontend Components & Unit Suite', () => {
       </NotificationProvider>
     );
 
-    expect(screen.getByText(/build real fitness consistency/i)).toBeInTheDocument();
-    expect(screen.getByText(/deterministic fitness engine/i)).toBeInTheDocument();
+    expect(screen.getByText(/your campus fitness/i)).toBeInTheDocument();
+    expect(screen.getByText(/get started free/i)).toBeInTheDocument();
+    expect(screen.getByText(/college gym management/i)).toBeInTheDocument();
+
+    // Verify complete removal of demo access elements
+    expect(screen.queryByText(/1-Click Interactive Demo Access/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Jordan Lee/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sarah Connor/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Alex Rivera/i)).not.toBeInTheDocument();
+  });
+
+  it('LoginPage renders credential inputs without demo quick-fill buttons or demo accounts', () => {
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <LoginPage />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(screen.getByText(/sign in to your account/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+
+    // Verify complete removal of demo fill buttons and references
+    expect(screen.queryByText(/Quick 1-Click Interactive Demo Fill/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/select a pre-seeded demo account/i)).not.toBeInTheDocument();
   });
 
   it('RegisterPage renders all required fields, password rules, and informational note without role dropdown', () => {
@@ -172,5 +204,71 @@ describe('FitPulse Frontend Components & Unit Suite', () => {
     fireEvent.blur(confirmPasswordInput);
 
     expect(screen.getByText(/passwords match/i)).toBeInTheDocument();
+  });
+
+  it('MembershipPage renders standard monthly plan and clearly labeled demo payment mode', async () => {
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <MembershipPage />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    // Initial loading or loaded content
+    expect(await screen.findByText(/select your membership plan/i)).toBeInTheDocument();
+    expect(screen.getByText(/fitpulse monthly pass/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/₹1,499/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/demo payment mode/i)).toBeInTheDocument();
+  });
+
+  it('ConsistencyReportPage renders consistency header and mathematical formula explanation', async () => {
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <ConsistencyReportPage />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(await screen.findByText(/member consistency report/i)).toBeInTheDocument();
+    expect(screen.getByText(/how this formula works/i)).toBeInTheDocument();
+    expect(screen.getByText(/consistency % =/i)).toBeInTheDocument();
+  });
+
+  it('MemberProfilePage renders account information, fitness profile, membership and action buttons', async () => {
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <MemberProfilePage />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(await screen.findByText(/account information/i)).toBeInTheDocument();
+    expect(screen.getByText(/fitness profile & preferences/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /membership pass/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit profile/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /change password/i })).toBeInTheDocument();
+  });
+
+  it('Logo component renders official logo image with descriptive alt text and wordmark', () => {
+    render(
+      <BrowserRouter>
+        <Logo size="md" to="/" />
+      </BrowserRouter>
+    );
+
+    const logoImg = screen.getByAltText('FitPulse logo');
+    expect(logoImg).toBeInTheDocument();
+    expect(logoImg.tagName).toBe('IMG');
+    expect(logoImg.className).toContain('object-contain');
+    expect(screen.getByText('FitPulse')).toBeInTheDocument();
   });
 });

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Activity, Lock, Mail, User, ArrowRight, ShieldCheck, Check, AlertCircle } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, ShieldCheck, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
+import { Logo } from '../../components/common/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 
@@ -147,26 +148,23 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-white">
       <div className="max-w-md w-full space-y-6">
         <div className="text-center">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Activity className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-black text-white tracking-tight">FitPulse</span>
-          </Link>
-          <h2 className="text-2xl font-extrabold text-white">Create Your Account</h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Join the consistency platform to manage your workouts and gym check-ins.
+          <div className="mb-4 flex justify-center">
+            <Logo size="lg" to="/" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900">Create Your Account</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Join the campus fitness platform to manage your workouts and gym attendance.
           </p>
         </div>
 
-        <Card className="space-y-4">
+        <Card className="p-8 space-y-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Full Name */}
             <div>
-              <label htmlFor="reg-name" className="text-xs text-slate-300 font-semibold block mb-1.5">
+              <label htmlFor="reg-name" className="text-xs text-slate-700 font-semibold block mb-1.5">
                 Full Name
               </label>
               <div className="relative">
@@ -179,14 +177,14 @@ export const RegisterPage = () => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="e.g. Alex Morgan"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-3 py-2 rounded-lg bg-white border border-gray-300 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* Email Address */}
             <div>
-              <label htmlFor="reg-email" className="text-xs text-slate-300 font-semibold block mb-1.5">
+              <label htmlFor="reg-email" className="text-xs text-slate-700 font-semibold block mb-1.5">
                 Email Address
               </label>
               <div className="relative">
@@ -199,14 +197,14 @@ export const RegisterPage = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="name@example.com"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-3 py-2 rounded-lg bg-white border border-gray-300 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="reg-password" className="text-xs text-slate-300 font-semibold block mb-1.5">
+              <label htmlFor="reg-password" className="text-xs text-slate-700 font-semibold block mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -220,17 +218,17 @@ export const RegisterPage = () => {
                   onChange={handleChange}
                   onBlur={() => handleBlur('password')}
                   placeholder="Create a strong password"
-                  className={`w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-800/80 border text-white text-xs focus:outline-none transition-colors ${
+                  className={`w-full pl-10 pr-3 py-2 rounded-lg bg-white border text-slate-900 text-sm focus:outline-none ${
                     passwordError
-                      ? 'border-rose-500/80 focus:border-rose-500'
-                      : 'border-slate-700 focus:border-emerald-500'
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
+                      : 'border-gray-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600'
                   }`}
                 />
               </div>
 
               {/* Password Requirements Checklist */}
-              <div className="mt-2.5 p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
-                <p className="text-[11px] font-medium text-slate-400">Password requirements:</p>
+              <div className="mt-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+                <p className="text-[11px] font-semibold text-slate-600">Password requirements:</p>
                 <div className="grid grid-cols-1 gap-1 text-[11px]">
                   {passwordRules.map((rule) => {
                     const isMet = rule.valid;
@@ -238,19 +236,19 @@ export const RegisterPage = () => {
                     return (
                       <div
                         key={rule.id}
-                        className={`flex items-center gap-1.5 transition-colors ${
+                        className={`flex items-center gap-1.5 ${
                           showSuccess
-                            ? 'text-emerald-400'
+                            ? 'text-emerald-700 font-medium'
                             : formData.password.length > 0
-                            ? 'text-slate-500'
-                            : 'text-slate-400'
+                            ? 'text-slate-400'
+                            : 'text-slate-500'
                         }`}
                       >
                         <span
                           className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${
                             showSuccess
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-slate-800 text-slate-500'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-slate-200 text-slate-500'
                           }`}
                         >
                           {showSuccess ? <Check className="w-2.5 h-2.5" /> : '•'}
@@ -263,7 +261,7 @@ export const RegisterPage = () => {
               </div>
 
               {passwordError && (
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-rose-400">
+                <div className="mt-1.5 flex items-center gap-1 text-xs text-rose-600">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{passwordError}</span>
                 </div>
@@ -272,7 +270,7 @@ export const RegisterPage = () => {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="reg-confirm-password" className="text-xs text-slate-300 font-semibold block mb-1.5">
+              <label htmlFor="reg-confirm-password" className="text-xs text-slate-700 font-semibold block mb-1.5">
                 Confirm Password
               </label>
               <div className="relative">
@@ -286,25 +284,25 @@ export const RegisterPage = () => {
                   onChange={handleChange}
                   onBlur={() => handleBlur('confirmPassword')}
                   placeholder="Re-enter your password"
-                  className={`w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-800/80 border text-white text-xs focus:outline-none transition-colors ${
+                  className={`w-full pl-10 pr-3 py-2 rounded-lg bg-white border text-slate-900 text-sm focus:outline-none ${
                     confirmPasswordError
-                      ? 'border-rose-500/80 focus:border-rose-500'
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
                       : passwordsMatch
-                      ? 'border-emerald-500/80 focus:border-emerald-500'
-                      : 'border-slate-700 focus:border-emerald-500'
+                      ? 'border-emerald-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600'
+                      : 'border-gray-300 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600'
                   }`}
                 />
               </div>
 
               {confirmPasswordError && (
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-rose-400">
+                <div className="mt-1.5 flex items-center gap-1 text-xs text-rose-600">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{confirmPasswordError}</span>
                 </div>
               )}
 
               {!confirmPasswordError && passwordsMatch && (
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-400">
+                <div className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600 font-medium">
                   <Check className="w-3.5 h-3.5 shrink-0" />
                   <span>Passwords match</span>
                 </div>
@@ -312,8 +310,8 @@ export const RegisterPage = () => {
             </div>
 
             {/* Informational Note */}
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs text-slate-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>New accounts are registered as <strong>Gym Members</strong>.</span>
             </div>
 
@@ -323,7 +321,7 @@ export const RegisterPage = () => {
               disabled={loading}
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full mt-2"
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Register & Continue
@@ -331,9 +329,9 @@ export const RegisterPage = () => {
           </form>
         </Card>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-emerald-400 hover:underline">
+          <Link to="/login" className="font-semibold text-emerald-600 hover:underline">
             Sign In
           </Link>
         </p>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Activity,
   LogOut,
   Menu,
   X,
+  MapPin,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { Logo } from '../common/Logo';
 
 export const Navbar = () => {
   const { user, logout, activeAttendance } = useAuth();
@@ -37,82 +38,90 @@ export const Navbar = () => {
     navigate('/');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/workouts' && location.pathname === '/workouts') return true;
+    return location.pathname === path;
+  };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-            <Activity className="w-6 h-6 text-slate-950" />
-          </div>
-          <div>
-            <span className="text-xl font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              FitPulse
-              <span className="text-emerald-400 font-mono text-xs px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-                PRO
-              </span>
-            </span>
-            <p className="text-[10px] text-slate-400 tracking-wider uppercase font-medium">
-              Consistency Platform
-            </p>
-          </div>
-        </Link>
+    <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Official FitPulse Logo */}
+        <Logo size="md" to="/" />
 
-        {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Center Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1">
           {user && user.role === 'member' && (
             <>
               <Link
                 to="/dashboard"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   isActive('/dashboard')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Dashboard
               </Link>
               <Link
                 to="/workouts"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   isActive('/workouts')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Workout Plan
               </Link>
               <Link
                 to="/exercises"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   isActive('/exercises')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Exercises
+                Exercise Library
               </Link>
               <Link
                 to="/attendance"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   isActive('/attendance')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Attendance
               </Link>
               <Link
-                to="/supplements"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/supplements')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                to="/consistency"
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive('/consistency')
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Nutrition & Guide
+                Consistency Report
+              </Link>
+              <Link
+                to="/supplements"
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive('/supplements')
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Supplement Guide
+              </Link>
+              <Link
+                to="/profile"
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive('/profile')
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Profile
               </Link>
             </>
           )}
@@ -121,33 +130,19 @@ export const Navbar = () => {
             <>
               <Link
                 to="/trainer/dashboard"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/trainer/dashboard')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                  isActive('/trainer/dashboard') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
                 }`}
               >
                 Trainer Portal
               </Link>
               <Link
                 to="/exercises"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/exercises')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isActive('/exercises') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
                 }`}
               >
                 Exercise Library
-              </Link>
-              <Link
-                to="/supplements"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/supplements')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                Supplements
               </Link>
             </>
           )}
@@ -156,57 +151,64 @@ export const Navbar = () => {
             <>
               <Link
                 to="/admin/dashboard"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/admin/dashboard')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                  isActive('/admin/dashboard') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
                 }`}
               >
                 Admin Center
               </Link>
               <Link
                 to="/exercises"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/exercises')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                  isActive('/exercises') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
                 }`}
               >
                 Exercise Master
               </Link>
+            </>
+          )}
+
+          {!user && (
+            <div className="flex items-center gap-1">
               <Link
-                to="/supplements"
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
-                  isActive('/supplements')
-                    ? 'bg-slate-800 text-emerald-400'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                to="/exercises"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive('/exercises')
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Supplement Master
+                Exercise Library
               </Link>
-            </>
+              <Link
+                to="/supplements"
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive('/supplements')
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Supplement Guide
+              </Link>
+            </div>
           )}
         </nav>
 
         {/* Right Action / Auth Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           {user ? (
-            <div className="flex items-center gap-3">
-              {/* Active Gym Check-in Badge */}
+            <div className="flex items-center gap-2.5">
+              {/* Check In Action Pill matching reference */}
               {user.role === 'member' && (
                 <Link
                   to="/attendance"
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
                     activeAttendance
-                      ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 animate-pulse hover:bg-emerald-500/25'
-                      : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:border-slate-600'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      : 'bg-white border-gray-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      activeAttendance ? 'bg-emerald-400' : 'bg-slate-500'
-                    }`}
-                  />
+                  <MapPin className={`w-3.5 h-3.5 ${activeAttendance ? 'text-emerald-600' : 'text-slate-500'}`} />
                   {activeAttendance ? (
                     <span>In Gym ({elapsedMinutes}m)</span>
                   ) : (
@@ -215,42 +217,30 @@ export const Navbar = () => {
                 </Link>
               )}
 
-              {/* User Role Badge */}
-              <Badge
-                variant={
-                  user.role === 'admin'
-                    ? 'purple'
-                    : user.role === 'trainer'
-                    ? 'cyan'
-                    : 'emerald'
-                }
-                size="sm"
-                className="hidden sm:inline-flex uppercase font-mono"
-              >
+              {/* MEMBER Role Badge matching reference */}
+              <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold tracking-wider uppercase">
                 {user.role}
-              </Badge>
+              </span>
 
-              {/* Logout Button */}
-              <Button
-                variant="outline"
-                size="sm"
+              {/* Logout Button matching reference */}
+              <button
                 onClick={handleLogout}
-                leftIcon={<LogOut className="w-3.5 h-3.5" />}
-                className="hidden sm:inline-flex"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-slate-700 text-xs font-medium hover:bg-slate-50 transition-colors"
               >
-                Logout
-              </Button>
+                <LogOut className="w-3.5 h-3.5 text-slate-600" />
+                <span>Logout</span>
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="rounded-lg border-gray-200 text-slate-700">
                   Sign In
                 </Button>
               </Link>
               <Link to="/register">
-                <Button variant="primary" size="sm">
-                  Join FitPulse
+                <Button variant="primary" size="sm" className="rounded-lg bg-emerald-600 text-white">
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -259,25 +249,27 @@ export const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+            className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-2 pb-6 space-y-2">
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-6 space-y-1">
           {user ? (
             <>
-              <div className="pb-3 border-b border-slate-800 flex items-center justify-between">
+              <div className="pb-3 mb-2 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-white">{user.name}</p>
-                  <p className="text-xs text-slate-400">{user.email}</p>
+                  <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                  <p className="text-xs text-slate-500">{user.email}</p>
                 </div>
-                <Badge variant="emerald">{user.role}</Badge>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold uppercase">
+                  {user.role}
+                </span>
               </div>
 
               {user.role === 'member' && (
@@ -285,100 +277,91 @@ export const Navbar = () => {
                   <Link
                     to="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/workouts"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
                   >
                     Workout Plan
                   </Link>
                   <Link
                     to="/exercises"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
                   >
                     Exercise Library
                   </Link>
                   <Link
                     to="/attendance"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
                   >
                     Attendance
                   </Link>
                   <Link
+                    to="/consistency"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+                  >
+                    Consistency Report
+                  </Link>
+                  <Link
                     to="/supplements"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
                   >
-                    Nutrition Guide
+                    Supplement Guide
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+                  >
+                    Profile
                   </Link>
                 </>
               )}
 
-              {user.role === 'trainer' && (
-                <>
-                  <Link
-                    to="/trainer/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
-                  >
-                    Trainer Portal
-                  </Link>
-                  <Link
-                    to="/exercises"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
-                  >
-                    Exercise Library
-                  </Link>
-                </>
-              )}
-
-              {user.role === 'admin' && (
-                <>
-                  <Link
-                    to="/admin/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
-                  >
-                    Admin Center
-                  </Link>
-                  <Link
-                    to="/exercises"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800"
-                  >
-                    Exercise Master
-                  </Link>
-                </>
-              )}
-
-              <Button
-                variant="danger"
-                size="sm"
+              <button
                 onClick={handleLogout}
-                className="w-full mt-4"
+                className="w-full mt-4 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
               >
-                Sign Out
-              </Button>
+                <LogOut className="w-3.5 h-3.5 text-slate-600" />
+                <span>Logout</span>
+              </button>
             </>
           ) : (
             <div className="space-y-2 pt-2">
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
-                <Button variant="outline" className="w-full">
-                  Sign In
-                </Button>
+              <Link
+                to="/exercises"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+              >
+                Exercise Library
               </Link>
-              <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block">
-                <Button variant="primary" className="w-full">
-                  Join FitPulse
-                </Button>
+              <Link
+                to="/supplements"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+              >
+                Supplement Guide
               </Link>
+              <div className="pt-2 border-t border-gray-100 space-y-2">
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block">
+                  <Button variant="outline" className="w-full">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block">
+                  <Button variant="primary" className="w-full bg-emerald-600 text-white">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

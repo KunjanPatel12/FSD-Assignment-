@@ -6,6 +6,7 @@ import {
   logout,
   getMe,
   updatePreferences,
+  changePassword,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -28,5 +29,7 @@ router.post('/login', authLimiter, login);
 router.post('/logout', logout);
 router.get('/me', protect, getMe);
 router.patch('/preferences', protect, updatePreferences);
+router.put('/change-password', protect, changePassword);
+router.post('/change-password', protect, changePassword);
 
 export default router;

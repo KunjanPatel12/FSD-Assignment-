@@ -4,7 +4,6 @@ import { NotificationProvider } from './context/NotificationContext';
 import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Navbar } from './components/layout/Navbar';
-import { Footer } from './components/layout/Footer';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 // Pages
@@ -12,20 +11,23 @@ import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { OnboardingPage } from './pages/member/OnboardingPage';
+import { MemberProfilePage } from './pages/member/MemberProfilePage';
 import { MemberDashboard } from './pages/member/MemberDashboard';
 import { WorkoutPlanView } from './pages/member/WorkoutPlanView';
 import { ExerciseLibraryPage } from './pages/member/ExerciseLibraryPage';
 import { AttendanceHistoryPage } from './pages/member/AttendanceHistoryPage';
 import { SupplementGuidePage } from './pages/member/SupplementGuidePage';
+import { MembershipPage } from './pages/member/MembershipPage';
+import { ConsistencyReportPage } from './pages/member/ConsistencyReportPage';
 import { TrainerDashboard } from './pages/trainer/TrainerDashboard';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 export function AppContent() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-slate-950">
+    <div className="flex flex-col min-h-screen bg-white text-slate-800 selection:bg-emerald-100 selection:text-emerald-900">
       <Navbar />
 
-      <main className="flex-1">
+      <main className="flex-1 pb-10">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -40,6 +42,14 @@ export function AppContent() {
             element={
               <ProtectedRoute allowedRoles={['member']}>
                 <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['member']}>
+                <MemberProfilePage />
               </ProtectedRoute>
             }
           />
@@ -64,6 +74,22 @@ export function AppContent() {
             element={
               <ProtectedRoute allowedRoles={['member']}>
                 <AttendanceHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/membership"
+            element={
+              <ProtectedRoute allowedRoles={['member']}>
+                <MembershipPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/consistency"
+            element={
+              <ProtectedRoute allowedRoles={['member']}>
+                <ConsistencyReportPage />
               </ProtectedRoute>
             }
           />
@@ -93,11 +119,11 @@ export function AppContent() {
             path="*"
             element={
               <div className="max-w-md mx-auto py-24 text-center space-y-4">
-                <h2 className="text-3xl font-extrabold text-white">404 - Not Found</h2>
-                <p className="text-xs text-slate-400">The requested FitPulse page does not exist.</p>
+                <h2 className="text-3xl font-extrabold text-slate-900">404 - Not Found</h2>
+                <p className="text-sm text-slate-500">The requested FitPulse page does not exist.</p>
                 <a
                   href="/"
-                  className="inline-block px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs"
+                  className="inline-block px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium text-sm"
                 >
                   Return Home
                 </a>
@@ -106,8 +132,6 @@ export function AppContent() {
           />
         </Routes>
       </main>
-
-      <Footer />
     </div>
   );
 }

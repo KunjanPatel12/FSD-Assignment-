@@ -1,43 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
-  Dumbbell,
-  Target,
-  Calendar,
-  Flame,
   ShieldAlert,
   ArrowRight,
-  Clock,
-  Heart,
-  DollarSign,
+  User,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
-import { Badge } from '../../components/common/Badge';
-import { profileApi } from '../../services/api';
+import { profileApi, membershipApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import confetti from 'canvas-confetti';
 
 export const OnboardingPage = () => {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { success, error: notifyError } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [membership, setMembership] = useState(null);
 
   const [formData, setFormData] = useState({
-    age: 24,
+    age: 21,
     heightCm: 175,
-    weightKg: 72,
+    weightKg: 70,
     fitnessGoal: 'muscle_gain',
     experienceLevel: 'intermediate',
     plannedDaysPerWeek: 4,
     preferredSchedule: 'morning',
-    monthlySupplementBudget: 40,
+    monthlySupplementBudget: 1500,
     dietaryPreferences: 'Balanced whole foods',
     healthNotes: '',
   });
+
+  useEffect(() => {
+    const loadProfileAndMembership = async () => {
+      try {
+        const res = await profileApi.getProfile();
+        if (res.profile) {
+          setFormData({
+            age: res.profile.age || 21,
+            heightCm: res.profile.heightCm || 175,
+            weightKg: res.profile.weightKg || 70,
+            fitnessGoal: res.profile.fitnessGoal || 'muscle_gain',
+            experienceLevel: res.profile.experienceLevel || 'intermediate',
+            plannedDaysPerWeek: res.profile.plannedDaysPerWeek || 4,
+            preferredSchedule: res.profile.preferredSchedule || 'morning',
+            monthlySupplementBudget: res.profile.monthlySupplementBudget || 1500,
+            dietaryPreferences: res.profile.dietaryPreferences || 'Balanced whole foods',
+            healthNotes: res.profile.healthNotes || '',
+          });
+        }
+      } catch (err) {
+        // No existing profile yet
+      }
+
+      try {
+        const memRes = await membershipApi.getStatus();
+        setMembership(memRes.membership);
+      } catch (err) {
+        // Membership not loaded
+      }
+    };
+
+    loadProfileAndMembership();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +84,7 @@ export const OnboardingPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await profileApi.updateProfile({
+      await profileApi.updateProfile({
         ...formData,
         regeneratePlan: true,
       });
@@ -68,43 +96,55 @@ export const OnboardingPage = () => {
       });
 
       await refreshUser();
-      success('Fitness profile saved & personalized workout plan generated!');
-      navigate('/dashboard');
+      success('Fitness profile saved & personalized workout plan updated!');
+      navigate('/membership');
     } catch (err) {
-      notifyError(err.message || 'Failed to complete profile onboarding.');
+      notifyError(err.message || 'Failed to save profile.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5" /> Step 1: Personalized Fitness Baseline
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 bg-white">
+      <div className="space-y-1.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+          <Sparkles className="w-3.5 h-3.5" /> Member Fitness Profile & Preferences
         </div>
-        <h2 className="text-3xl font-black text-white tracking-tight">
-          Welcome to FitPulse! Let's tailor your routine
-        </h2>
-        <p className="text-xs text-slate-400 max-w-xl mx-auto">
-          Our deterministic engine configures your sets, reps, split, and consistency targets
-          based on your actual schedule and goal.
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+          Personal Fitness Profile
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+          Configure your baseline metrics, fitness goals, and preferred weekly schedule. Your workout split is dynamically generated from these parameters.
         </p>
       </div>
 
-      <Card className="space-y-6">
+      {/* Membership Info Snippet if active */}
+      {membership && membership.isActive && (
+        <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/80 flex items-center justify-between text-xs text-slate-700">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-emerald-600" />
+            <span>Active Plan: <strong>{membership.planName}</strong></span>
+          </div>
+          <span className="font-mono text-emerald-700 font-semibold">
+            {membership.daysRemaining || 0} Days Remaining
+          </span>
+        </div>
+      )}
+
+      <Card className="p-6 sm:p-8 space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Biometrics */}
           <div>
-            <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center font-bold">
+            <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center font-bold">
                 1
               </span>
-              Basic Metrics
-            </h4>
+              Physical Measurements
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Age (Years) *</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1">Age (Years) *</label>
                 <input
                   type="number"
                   name="age"
@@ -113,11 +153,11 @@ export const OnboardingPage = () => {
                   required
                   value={formData.age}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Height (cm)</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1">Height (cm)</label>
                 <input
                   type="number"
                   name="heightCm"
@@ -126,11 +166,11 @@ export const OnboardingPage = () => {
                   value={formData.heightCm}
                   onChange={handleChange}
                   placeholder="e.g. 175"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Weight (kg)</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1">Weight (kg)</label>
                 <input
                   type="number"
                   step="0.5"
@@ -139,8 +179,8 @@ export const OnboardingPage = () => {
                   max="250"
                   value={formData.weightKg}
                   onChange={handleChange}
-                  placeholder="e.g. 72.5"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  placeholder="e.g. 70"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
             </div>
@@ -148,20 +188,20 @@ export const OnboardingPage = () => {
 
           {/* Goal & Experience */}
           <div>
-            <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-md bg-cyan-500/20 text-cyan-400 text-xs flex items-center justify-center font-bold">
+            <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center font-bold">
                 2
               </span>
-              Fitness Goal & Experience
-            </h4>
+              Fitness Goal & Training Level
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-slate-300 block mb-1.5">Primary Target</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1.5">Primary Target</label>
                 <select
                   name="fitnessGoal"
                   value={formData.fitnessGoal}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none font-medium"
                 >
                   <option value="muscle_gain">Muscle Gain (Hypertrophy, 8-12 reps)</option>
                   <option value="strength">Strength & Power (Compound lifts, 4-6 reps)</option>
@@ -172,12 +212,12 @@ export const OnboardingPage = () => {
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 block mb-1.5">Experience Tier</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1.5">Experience Tier</label>
                 <select
                   name="experienceLevel"
                   value={formData.experienceLevel}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none font-medium"
                 >
                   <option value="beginner">Beginner (Foundational Movements)</option>
                   <option value="intermediate">Intermediate (Regular Training History)</option>
@@ -189,19 +229,19 @@ export const OnboardingPage = () => {
 
           {/* Training Commitment */}
           <div>
-            <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 text-xs flex items-center justify-center font-bold">
+            <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center font-bold">
                 3
               </span>
-              Training Commitment
-            </h4>
+              Weekly Training Commitment
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs text-slate-300">
+                  <label className="text-xs text-slate-700 font-semibold">
                     Planned Days Per Week:
                   </label>
-                  <span className="text-sm font-bold text-emerald-400 font-mono">
+                  <span className="text-sm font-bold text-emerald-700 font-mono">
                     {formData.plannedDaysPerWeek} Days
                   </span>
                 </div>
@@ -212,9 +252,9 @@ export const OnboardingPage = () => {
                   max="7"
                   value={formData.plannedDaysPerWeek}
                   onChange={handleChange}
-                  className="w-full accent-emerald-500"
+                  className="w-full accent-emerald-600"
                 />
-                <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                <div className="flex justify-between text-[11px] text-slate-400 font-mono mt-1">
                   <span>1 Day</span>
                   <span>4 Days (Split)</span>
                   <span>7 Days</span>
@@ -222,12 +262,12 @@ export const OnboardingPage = () => {
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Preferred Time of Day</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1">Preferred Time of Day</label>
                 <select
                   name="preferredSchedule"
                   value={formData.preferredSchedule}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none font-medium"
                 >
                   <option value="morning">Morning (06:00 - 10:00)</option>
                   <option value="afternoon">Afternoon (12:00 - 16:00)</option>
@@ -239,41 +279,42 @@ export const OnboardingPage = () => {
 
           {/* Nutrition & Budget */}
           <div>
-            <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-md bg-purple-500/20 text-purple-400 text-xs flex items-center justify-center font-bold">
+            <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center justify-center font-bold">
                 4
               </span>
-              Nutrition & Notes (Optional)
-            </h4>
+              Nutrition & Supplement Budget (Optional)
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-slate-300 block mb-1">
-                  Monthly Supplement Budget ($)
+                <label className="text-xs text-slate-700 font-semibold block mb-1">
+                  Monthly Supplement Budget (₹ INR)
                 </label>
                 <input
                   type="number"
                   min="0"
+                  step="100"
                   name="monthlySupplementBudget"
                   value={formData.monthlySupplementBudget}
                   onChange={handleChange}
-                  placeholder="e.g. 50"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  placeholder="e.g. 1500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-300 block mb-1">Dietary Focus</label>
+                <label className="text-xs text-slate-700 font-semibold block mb-1">Dietary Focus</label>
                 <input
                   type="text"
                   name="dietaryPreferences"
                   value={formData.dietaryPreferences}
                   onChange={handleChange}
                   placeholder="e.g. Vegetarian, High protein"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none placeholder-gray-400"
                 />
               </div>
             </div>
             <div className="mt-3">
-              <label className="text-xs text-slate-300 block mb-1">
+              <label className="text-xs text-slate-700 font-semibold block mb-1">
                 Health Notes or Joint Sensitivities
               </label>
               <textarea
@@ -282,18 +323,18 @@ export const OnboardingPage = () => {
                 value={formData.healthNotes}
                 onChange={handleChange}
                 placeholder="e.g. Mild knee soreness during heavy squats..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:border-emerald-500 focus:outline-none resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-slate-900 text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none placeholder-gray-400 resize-none"
               />
             </div>
           </div>
 
           {/* Non-medical disclaimer */}
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2.5 text-xs text-slate-400">
-            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-xs text-slate-600">
+            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <p>
-              FitPulse uses your parameters strictly for deterministic exercise selection and
+              FitPulse uses your parameters strictly for exercise selection and
               consistency math. We never prescribe medical advice or diagnosis. Always consult a
-              physician for individual clinical assessments.
+              physician for individual health assessments.
             </p>
           </div>
 
@@ -303,9 +344,9 @@ export const OnboardingPage = () => {
             variant="primary"
             size="lg"
             className="w-full"
-            rightIcon={<ArrowRight className="w-5 h-5" />}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            Generate My Deterministic Workout Plan
+            Save Profile & Update Workout Plan
           </Button>
         </form>
       </Card>

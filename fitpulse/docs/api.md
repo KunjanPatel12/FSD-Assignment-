@@ -29,23 +29,23 @@ Returns service availability, timestamp, and runtime environment.
 ## 2. Authentication & Identity
 
 ### `POST /api/auth/register`
-Creates an account with bcrypt password hashing.
+Creates an account with bcrypt password hashing. All public registrations are automatically assigned `role: "member"`.
 - **Auth**: Public (Rate-limited: 30 req / 15m)
 - **Body**:
   ```json
   {
-    "name": "Jordan Lee",
-    "email": "jordan@fitpulse.local",
+    "name": "Alex Morgan",
+    "email": "alex@example.com",
     "password": "Password123!",
-    "role": "member" // "member" | "trainer" | "admin"
+    "confirmPassword": "Password123!"
   }
   ```
-- **Response `201`**: `{ success: true, token, user: { id, name, email, role } }`
+- **Response `201`**: `{ success: true, token, user: { id, name, email, role: "member" } }`
 
 ### `POST /api/auth/login`
 Validates credentials and issues signed JWT + HTTP-Only cookie.
 - **Auth**: Public (Rate-limited)
-- **Body**: `{ "email": "member@fitpulse.local", "password": "DemoPassword123!" }`
+- **Body**: `{ "email": "alex@example.com", "password": "Password123!" }`
 - **Response `200`**: `{ success: true, token, user }`
 
 ### `POST /api/auth/logout`

@@ -26,7 +26,8 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
   if (
     user.role === 'member' &&
     !profile &&
-    location.pathname !== '/onboarding'
+    location.pathname !== '/onboarding' &&
+    location.pathname !== '/profile'
   ) {
     return <Navigate to="/onboarding" replace />;
   }

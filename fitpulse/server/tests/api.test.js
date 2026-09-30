@@ -59,6 +59,20 @@ describe('FitPulse Backend API Suite', () => {
     memberToken = res.body.token;
   });
 
+  it('POST /api/auth/register should strictly enforce role: member even if client attempts role injection', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      name: 'Sneaky Attacker',
+      email: 'attacker@fitpulse.local',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
+      role: 'admin',
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.role).toBe('member');
+  });
+
   it('POST /api/auth/register should reject missing required fields', async () => {
     const res1 = await request(app).post('/api/auth/register').send({
       email: 'noname@fitpulse.local',
@@ -290,6 +304,58 @@ describe('FitPulse Backend API Suite', () => {
     expect(res.body.plan.days.length).toBe(4);
   });
 
+  it('GET /api/profile should return authenticated user details, fitness profile and membership', async () => {
+    const res = await request(app)
+      .get('/api/profile')
+      .set('Authorization', `Bearer ${memberToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.user.email).toBe('taylor@fitpulse.local');
+    expect(res.body.user.role).toBe('member');
+    expect(res.body.profile).toBeDefined();
+  });
+
+  it('PUT /api/auth/change-password should validate current password and update securely', async () => {
+    // 1. Wrong current password should fail
+    const failRes = await request(app)
+      .put('/api/auth/change-password')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        currentPassword: 'WrongPassword999!',
+        newPassword: 'BrandNewPassword123!',
+        confirmPassword: 'BrandNewPassword123!',
+      });
+
+    expect(failRes.status).toBe(400);
+    expect(failRes.body.message).toContain('Current password does not match');
+
+    // 2. Correct current password should succeed
+    const successRes = await request(app)
+      .put('/api/auth/change-password')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        currentPassword: 'Password123!',
+        newPassword: 'BrandNewPassword123!',
+        confirmPassword: 'BrandNewPassword123!',
+      });
+
+    expect(successRes.status).toBe(200);
+    expect(successRes.body.success).toBe(true);
+    expect(successRes.body.message).toContain('Password changed successfully');
+
+    // Revert back so subsequent tests don't break
+    await request(app)
+      .put('/api/auth/change-password')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        currentPassword: 'BrandNewPassword123!',
+        newPassword: 'Password123!',
+        confirmPassword: 'Password123!',
+      });
+  });
+
   it('POST /api/attendance/checkin and prevent duplicate active sessions', async () => {
     // 1st Check-in
     const res1 = await request(app)
@@ -355,5 +421,60 @@ describe('FitPulse Backend API Suite', () => {
 
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.user.role).toBe('trainer');
+  });
+
+  it('POST /api/membership/order should generate a pending membership plan order', async () => {
+    const res = await request(app)
+      .post('/api/membership/order')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        planName: 'FitPulse Standard Monthly',
+        durationDays: 30,
+        amountInr: 1499,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.order.planName).toBe('FitPulse Standard Monthly');
+    expect(res.body.order.amountInr).toBe(1499);
+    expect(res.body.order.paymentStatus).toBe('pending');
+  });
+
+  it('POST /api/membership/pay should simulate demo payment and activate membership for 30 days', async () => {
+    // 1. Create order
+    const orderRes = await request(app)
+      .post('/api/membership/order')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        planName: 'FitPulse Standard Monthly',
+        durationDays: 30,
+        amountInr: 1499,
+      });
+
+    const orderId = orderRes.body.order.id;
+
+    // 2. Pay order in demo mode
+    const payRes = await request(app)
+      .post('/api/membership/pay')
+      .set('Authorization', `Bearer ${memberToken}`)
+      .send({
+        orderId,
+        paymentOutcome: 'success',
+      });
+
+    expect(payRes.status).toBe(200);
+    expect(payRes.body.success).toBe(true);
+    expect(payRes.body.membership.paymentStatus).toBe('successful');
+    expect(payRes.body.membership.isActive).toBe(true);
+    expect(payRes.body.membership.transactionId).toBeDefined();
+
+    // 3. Status check confirms active membership
+    const statusRes = await request(app)
+      .get('/api/membership')
+      .set('Authorization', `Bearer ${memberToken}`);
+
+    expect(statusRes.status).toBe(200);
+    expect(statusRes.body.isActive).toBe(true);
+    expect(statusRes.body.membership.daysRemaining).toBeGreaterThanOrEqual(29);
   });
 });

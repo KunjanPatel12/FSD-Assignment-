@@ -3,6 +3,7 @@ import { Attendance } from '../models/Attendance.js';
 import { WorkoutPlan } from '../models/WorkoutPlan.js';
 import { WorkoutSession } from '../models/WorkoutSession.js';
 import { FitnessProfile } from '../models/FitnessProfile.js';
+import { Membership } from '../models/Membership.js';
 
 export const getConsistencyReport = async (req, res, next) => {
   try {
@@ -37,20 +38,24 @@ export const getDashboardSummary = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    // Concurrently fetch user profile, active plan, checkin status, consistency, and workouts count
+    // Concurrently fetch user profile, active plan, checkin status, consistency, workouts count, and membership
     const [
       profile,
       activePlan,
       activeAttendance,
       consistency,
       totalWorkouts,
+      membership,
     ] = await Promise.all([
       FitnessProfile.findOne({ userId }),
       WorkoutPlan.findOne({ userId, isActive: true }).populate('days.exercises.exerciseId'),
       Attendance.findOne({ userId, status: 'active' }),
       calculateConsistency(userId),
       WorkoutSession.countDocuments({ userId }),
+      Membership.findOne({ userId }).sort({ createdAt: -1 }),
     ]);
+
+    const isMembershipActive = membership ? membership.isActive() : false;
 
     // Find today's suggested workout day based on day of week
     let todaysWorkout = null;
@@ -82,6 +87,22 @@ export const getDashboardSummary = async (req, res, next) => {
         },
         totalWorkouts,
         motivationalQuote,
+        membership: membership
+          ? {
+              id: membership._id,
+              planName: membership.planName,
+              durationDays: membership.durationDays,
+              amountInr: membership.amountInr,
+              paymentStatus: membership.paymentStatus,
+              startDate: membership.startDate,
+              endDate: membership.endDate,
+              isActive: isMembershipActive,
+              daysRemaining:
+                isMembershipActive && membership.endDate
+                  ? Math.max(0, Math.ceil((new Date(membership.endDate) - new Date()) / (1000 * 60 * 60 * 24)))
+                  : 0,
+            }
+          : null,
       },
     });
   } catch (err) {

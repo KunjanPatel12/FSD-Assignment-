@@ -36,10 +36,10 @@ fitpulse/
 │   │   │   └── NotificationContext.jsx     # Floating toast notifications (success, error, etc.)
 │   │   ├── pages/                          # Role-Specific & Public SPA Screens
 │   │   │   ├── public/
-│   │   │   │   └── LandingPage.jsx         # Hero, features, 1-click demo logins, architecture
+│   │   │   │   └── LandingPage.jsx         # Hero, features, deterministic engine showcase, architecture
 │   │   │   ├── auth/
-│   │   │   │   ├── LoginPage.jsx           # Sign in with 1-click fast-fill demo credentials
-│   │   │   │   └── RegisterPage.jsx        # New account registration with role selector
+│   │   │   │   ├── LoginPage.jsx           # Secure credential sign-in with role-based routing
+│   │   │   │   └── RegisterPage.jsx        # Public member account registration with password rules
 │   │   │   ├── member/
 │   │   │   │   ├── OnboardingPage.jsx      # Multi-step fitness baseline & goal onboarding
 │   │   │   │   ├── MemberDashboard.jsx     # Primary dashboard (metrics, today's workout, streaks)
@@ -117,7 +117,7 @@ fitpulse/
 │   │   │   └── authValidators.js           # Zod schemas for auth & profiles
 │   │   ├── seed/                           # Database Seeding
 │   │   │   ├── seedData.js                 # Starter exercises, supplements, gym schedule
-│   │   │   └── seedRunner.js               # Idempotent seed script with realistic demo data
+│   │   │   └── seedRunner.js               # Idempotent seed script for starter reference data
 │   │   ├── app.js                          # Express app configuration, helmet, cors, parsers
 │   │   └── server.js                       # Server entrypoint with DB connection & shutdown
 │   ├── tests/

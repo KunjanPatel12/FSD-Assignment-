@@ -14,27 +14,27 @@ export const Button = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
+    'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed select-none';
 
   const variants = {
     primary:
-      'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold focus:ring-emerald-500 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30',
+      'bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm',
     secondary:
-      'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700/80 focus:ring-slate-500',
+      'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200',
     outline:
-      'bg-transparent hover:bg-slate-800/60 text-slate-200 border border-slate-700 hover:border-slate-600 focus:ring-slate-500',
+      'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-sm',
     danger:
-      'bg-rose-600 hover:bg-rose-500 text-white font-medium focus:ring-rose-500 shadow-lg shadow-rose-600/20',
+      'bg-rose-600 hover:bg-rose-700 text-white font-medium shadow-sm',
     ghost:
-      'bg-transparent hover:bg-slate-800/50 text-slate-300 hover:text-white focus:ring-slate-600',
+      'bg-transparent hover:bg-slate-100 text-slate-600',
     accent:
-      'bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold focus:ring-cyan-500 shadow-lg shadow-cyan-500/20',
+      'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200',
   };
 
   const sizes = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
-    md: 'text-sm px-4 py-2.5 gap-2',
-    lg: 'text-base px-6 py-3.5 gap-2.5 font-semibold',
+    md: 'text-sm px-4 py-2 gap-2',
+    lg: 'text-base px-6 py-2.5 gap-2.5 font-medium',
   };
 
   return (

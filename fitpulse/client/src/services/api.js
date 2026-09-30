@@ -75,12 +75,20 @@ export const authApi = {
   logout: () => apiClient('/auth/logout', { method: 'POST' }),
   getMe: () => apiClient('/auth/me'),
   updatePreferences: (prefs) => apiClient('/auth/preferences', { method: 'PATCH', body: prefs }),
+  changePassword: (data) => apiClient('/auth/change-password', { method: 'PUT', body: data }),
 };
 
 // Fitness Profile
 export const profileApi = {
   getProfile: () => apiClient('/profile'),
   updateProfile: (profileData) => apiClient('/profile', { method: 'POST', body: profileData }),
+};
+
+// Membership & Payment
+export const membershipApi = {
+  getStatus: () => apiClient('/membership'),
+  createOrder: (orderData = {}) => apiClient('/membership/order', { method: 'POST', body: orderData }),
+  processPayment: (paymentData) => apiClient('/membership/pay', { method: 'POST', body: paymentData }),
 };
 
 // Exercises
