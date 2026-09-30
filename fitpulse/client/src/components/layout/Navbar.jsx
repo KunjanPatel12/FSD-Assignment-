@@ -148,24 +148,14 @@ export const Navbar = () => {
           )}
 
           {user && user.role === 'admin' && (
-            <>
-              <Link
-                to="/admin/dashboard"
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  isActive('/admin/dashboard') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
-                }`}
-              >
-                Admin Center
-              </Link>
-              <Link
-                to="/exercises"
-                className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                  isActive('/exercises') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'
-                }`}
-              >
-                Exercise Master
-              </Link>
-            </>
+            <Link
+              to="/admin/dashboard"
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold ${
+                isActive('/admin/dashboard') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Admin Center
+            </Link>
           )}
 
           {!user && (
@@ -324,6 +314,35 @@ export const Navbar = () => {
                     Profile
                   </Link>
                 </>
+              )}
+
+              {user.role === 'trainer' && (
+                <>
+                  <Link
+                    to="/trainer/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+                  >
+                    Trainer Portal
+                  </Link>
+                  <Link
+                    to="/exercises"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+                  >
+                    Exercise Library
+                  </Link>
+                </>
+              )}
+
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 font-medium"
+                >
+                  Admin Center
+                </Link>
               )}
 
               <button

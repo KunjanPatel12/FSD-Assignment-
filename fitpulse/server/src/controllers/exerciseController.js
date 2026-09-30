@@ -84,15 +84,3 @@ export const updateExercise = async (req, res, next) => {
     next(err);
   }
 };
-
-export const deleteExercise = async (req, res, next) => {
-  try {
-    const exercise = await Exercise.findByIdAndDelete(req.params.id);
-    if (!exercise) {
-      return res.status(404).json({ success: false, message: 'Exercise not found.' });
-    }
-    res.status(200).json({ success: true, message: 'Exercise removed successfully.' });
-  } catch (err) {
-    next(err);
-  }
-};

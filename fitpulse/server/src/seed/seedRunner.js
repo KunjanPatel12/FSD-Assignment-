@@ -48,21 +48,29 @@ export const seedDatabase = async () => {
     }
     console.log('✅ Educational supplement items populated.');
 
-    // 4. Controlled Administrator Bootstrap (Only if specified via environment configuration)
-    const initialAdminEmail = process.env.INITIAL_ADMIN_EMAIL;
-    const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+    // 4. Controlled Administrator & Trainer Provisioning
+    const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Password123!';
 
-    if (initialAdminEmail && initialAdminPassword) {
-      const existingAdmin = await User.findOne({ email: initialAdminEmail.toLowerCase().trim() });
-      if (!existingAdmin) {
-        await User.create({
-          name: process.env.INITIAL_ADMIN_NAME || 'System Administrator',
-          email: initialAdminEmail.toLowerCase().trim(),
-          password: initialAdminPassword,
-          role: 'admin',
-        });
-        console.log(`👤 [Bootstrap] Initial administrator provisioned: ${initialAdminEmail}`);
-      }
+    let admin = await User.findOne({ email: 'admin@fitpulse.local' });
+    if (!admin) {
+      admin = await User.create({
+        name: 'FitPulse Administrator',
+        email: 'admin@fitpulse.local',
+        password: defaultPassword,
+        role: 'admin',
+      });
+      console.log('👤 [Bootstrap] Admin provisioned: admin@fitpulse.local');
+    }
+
+    let trainer = await User.findOne({ email: 'trainer@fitpulse.local' });
+    if (!trainer) {
+      trainer = await User.create({
+        name: 'FitPulse Trainer',
+        email: 'trainer@fitpulse.local',
+        password: defaultPassword,
+        role: 'trainer',
+      });
+      console.log('👤 [Bootstrap] Trainer provisioned: trainer@fitpulse.local');
     }
 
     console.log('🎉 [FitPulse Seed] Reference data initialized successfully.');

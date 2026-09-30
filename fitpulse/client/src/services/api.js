@@ -91,16 +91,13 @@ export const membershipApi = {
   processPayment: (paymentData) => apiClient('/membership/pay', { method: 'POST', body: paymentData }),
 };
 
-// Exercises
+// Exercises (Member browsing & workout reference)
 export const exerciseApi = {
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiClient(`/exercises${query ? `?${query}` : ''}`);
   },
   getById: (id) => apiClient(`/exercises/${id}`),
-  create: (data) => apiClient('/exercises', { method: 'POST', body: data }),
-  update: (id, data) => apiClient(`/exercises/${id}`, { method: 'PUT', body: data }),
-  delete: (id) => apiClient(`/exercises/${id}`, { method: 'DELETE' }),
 };
 
 // Workout Plans & Sessions
@@ -167,8 +164,4 @@ export const adminApi = {
     apiClient(`/admin/users/${id}/role`, { method: 'PATCH', body: data }),
   getSchedule: () => apiClient('/admin/schedule'),
   updateSchedule: (data) => apiClient('/admin/schedule', { method: 'PUT', body: data }),
-  getAuditLogs: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return apiClient(`/admin/audit-logs${query ? `?${query}` : ''}`);
-  },
 };

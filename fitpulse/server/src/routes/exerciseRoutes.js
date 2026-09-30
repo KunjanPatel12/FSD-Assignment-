@@ -4,18 +4,17 @@ import {
   getExerciseById,
   createExercise,
   updateExercise,
-  deleteExercise,
 } from '../controllers/exerciseController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Public / Member browsing routes (Essential for Member Library & Workout generation)
 router.get('/', getAllExercises);
 router.get('/:id', getExerciseById);
 
-// Protected mutation routes
-router.post('/', protect, authorize('trainer', 'admin'), createExercise);
-router.put('/:id', protect, authorize('trainer', 'admin'), updateExercise);
-router.delete('/:id', protect, authorize('admin'), deleteExercise);
+// Trainer routine support mutations
+router.post('/', protect, authorize('trainer'), createExercise);
+router.put('/:id', protect, authorize('trainer'), updateExercise);
 
 export default router;

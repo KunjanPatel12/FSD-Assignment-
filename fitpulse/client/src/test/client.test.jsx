@@ -271,4 +271,77 @@ describe('FitPulse Frontend Components & Unit Suite', () => {
     expect(logoImg.className).toContain('object-contain');
     expect(screen.getByText('FitPulse')).toBeInTheDocument();
   });
+
+  it('TrainerDashboard renders Member Roster, search input, and improved empty state with emerald green styling', async () => {
+    const { TrainerDashboard } = await import('../pages/trainer/TrainerDashboard');
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <TrainerDashboard />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(await screen.findByText(/Head Coach & Trainer Portal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Member Roster & Routine Management/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search member by name or email/i)).toBeInTheDocument();
+    expect(screen.getByText(/Select an Athlete from the Roster/i)).toBeInTheDocument();
+  });
+
+  it('AdminDashboard renders Platform Stats, Users, and Gym Operating Schedule, and excludes Security Audit Logs', async () => {
+    const { AdminDashboard } = await import('../pages/admin/AdminDashboard');
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AdminDashboard />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(await screen.findByText(/Administrative Operations Center/i)).toBeInTheDocument();
+    expect(screen.getByText(/System Overview & Facility Control/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Platform Stats/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Gym Operating Schedule/i })).toBeInTheDocument();
+
+    // Verify Security Audit Logs tab/section is completely removed
+    expect(screen.queryByRole('button', { name: /Security Audit Logs/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Security & Administrative Audit Trails/i)).not.toBeInTheDocument();
+  });
+
+  it('Navbar excludes Exercise Master from Admin menu while preserving Admin Center', async () => {
+    const { Navbar } = await import('../components/layout/Navbar');
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Navbar />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    // Exercise Master must not appear in the document
+    expect(screen.queryByText('Exercise Master')).not.toBeInTheDocument();
+  });
+
+  it('ExerciseLibraryPage continues to render Curated Exercise Library with search and filters', async () => {
+    const { ExerciseLibraryPage } = await import('../pages/member/ExerciseLibraryPage');
+    render(
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <ExerciseLibraryPage />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
+    );
+
+    expect(await screen.findByText(/Curated Exercise Library/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search exercise by name/i)).toBeInTheDocument();
+    expect(screen.getByText('All Equipment')).toBeInTheDocument();
+  });
 });
