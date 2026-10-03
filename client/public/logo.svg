@@ -1,7 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 44" fill="none">
-  <!-- Heartbeat / Pulse Icon -->
-  <rect width="40" height="40" rx="8" fill="#10B981"/>
-  <path d="M8 20H14L17 12L23 28L26 20H32" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- FitPulse Text -->
-  <text x="50" y="27" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="20" fill="#0F172A">Fit<tspan fill="#10B981">Pulse</tspan></text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 175 44" fill="none">
+  <!-- Black Rounded Squircle Badge -->
+  <rect x="2" y="2" width="40" height="40" rx="10" fill="#0A0B0D" />
+
+  <!-- Gold Circular Ring -->
+  <circle cx="22" cy="22" r="14.5" stroke="#F1C42E" stroke-width="2.8" fill="none" />
+
+  <!-- Stylized "F" with Heartbeat Pulse -->
+  <!-- Top bar of F -->
+  <polygon points="14,13 28,13 26.8,16.5 13.3,16.5" fill="#F1C42E" />
+
+  <!-- Slanted Stem of F -->
+  <polygon points="13.3,13 10,29.5 13.5,29.5 16.6,14.5" fill="#F1C42E" />
+
+  <!-- Middle arm extending into pulse wave -->
+  <path d="M14 21.5 H18 L19.8 17.5 L22.5 26.5 L24.8 19.5 H28" 
+        stroke="#F1C42E" 
+        stroke-width="2.4" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none" />
+
+  <!-- Dark Navy FitPulse Text -->
+  <text x="52" y="29.5" 
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-weight="800" 
+        font-size="22" 
+        fill="#0A1832" 
+        letter-spacing="-0.3">FitPulse</text>
 </svg>
