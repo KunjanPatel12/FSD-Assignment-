@@ -1,0 +1,44 @@
+import mongoose from 'mongoose';
+
+const attendanceSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    checkInTime: {
+      type: Date,
+      required: true,
+      default: Date.now,
+      index: true,
+    },
+    checkOutTime: {
+      type: Date,
+      default: null,
+    },
+    durationMinutes: {
+      type: Number,
+      default: 60,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'completed'],
+      default: 'completed',
+    },
+    dateKey: {
+      type: String, // YYYY-MM-DD
+      required: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Attendance =
+  mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
+
+export default Attendance;
