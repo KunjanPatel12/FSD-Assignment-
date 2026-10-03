@@ -2,6 +2,7 @@ import User from '../models/user.model.js';
 import FitnessProfile from '../models/fitnessProfile.model.js';
 import WorkoutPlan from '../models/workoutPlan.model.js';
 import Attendance from '../models/attendance.model.js';
+import { generateRuleBasedPlan } from './workoutGenerator.service.js';
 
 export const getMemberDashboardData = async (userId) => {
   const user = await User.findById(userId).select('-password');
@@ -23,75 +24,25 @@ export const getMemberDashboardData = async (userId) => {
 
   // 2. Fetch or initialize WorkoutPlan
   let plan = await WorkoutPlan.findOne({ userId, isActive: true });
-  if (!plan) {
-    plan = await WorkoutPlan.create({
-      userId,
-      name: 'Personalized 5-Day Split Plan',
-      goal: profile.fitnessGoal,
-      daysPerWeek: profile.plannedDaysPerWeek || 5,
-      isActive: true,
-      days: [
-        {
-          dayNumber: 1,
-          dayName: 'Chest & Triceps (Push A)',
-          focus: 'Chest, Shoulders & Triceps',
-          exercises: [
-            { exerciseName: 'Barbell Flat Bench Press', sets: 4, reps: '8-10', restSeconds: 90 },
-            { exerciseName: 'Incline Dumbbell Press', sets: 3, reps: '10-12', restSeconds: 60 },
-            { exerciseName: 'Cable Chest Flyes', sets: 3, reps: '12-15', restSeconds: 60 },
-            { exerciseName: 'Triceps Overhead Extension', sets: 3, reps: '12', restSeconds: 60 },
-            { exerciseName: 'Rope Pushdowns', sets: 3, reps: '15', restSeconds: 45 },
-          ],
-        },
-        {
-          dayNumber: 2,
-          dayName: 'Back & Biceps (Pull A)',
-          focus: 'Lats, Upper Back & Biceps',
-          exercises: [
-            { exerciseName: 'Lat Pulldowns', sets: 4, reps: '10-12', restSeconds: 75 },
-            { exerciseName: 'Bent-Over Barbell Rows', sets: 4, reps: '8-10', restSeconds: 90 },
-            { exerciseName: 'Seated Cable Row', sets: 3, reps: '10-12', restSeconds: 60 },
-            { exerciseName: 'Barbell Bicep Curls', sets: 3, reps: '10-12', restSeconds: 60 },
-            { exerciseName: 'Hammer Curls', sets: 3, reps: '12-15', restSeconds: 45 },
-          ],
-        },
-        {
-          dayNumber: 3,
-          dayName: 'Legs & Core (Legs A)',
-          focus: 'Quads, Hamstrings & Core',
-          exercises: [
-            { exerciseName: 'Barbell Back Squats', sets: 4, reps: '8-10', restSeconds: 120 },
-            { exerciseName: 'Leg Press Machine', sets: 3, reps: '10-12', restSeconds: 90 },
-            { exerciseName: 'Hamstring Curls', sets: 3, reps: '12-15', restSeconds: 60 },
-            { exerciseName: 'Standing Calf Raises', sets: 4, reps: '15-20', restSeconds: 45 },
-            { exerciseName: 'Core Plank Hold', sets: 3, reps: '60s', restSeconds: 60 },
-          ],
-        },
-        {
-          dayNumber: 4,
-          dayName: 'Shoulders & Arms (Upper B)',
-          focus: 'Deltoids, Biceps & Triceps',
-          exercises: [
-            { exerciseName: 'Overhead Barbell Press', sets: 4, reps: '8-10', restSeconds: 90 },
-            { exerciseName: 'Dumbbell Lateral Raises', sets: 4, reps: '12-15', restSeconds: 45 },
-            { exerciseName: 'Face Pulls with Rope', sets: 3, reps: '15', restSeconds: 60 },
-            { exerciseName: 'Incline Dumbbell Curls', sets: 3, reps: '10-12', restSeconds: 60 },
-            { exerciseName: 'Dips / Skull Crushers', sets: 3, reps: '10-12', restSeconds: 60 },
-          ],
-        },
-        {
-          dayNumber: 5,
-          dayName: 'Posterior Chain & Conditioning (Pull/Legs B)',
-          focus: 'Hamstrings, Glutes & Upper Back',
-          exercises: [
-            { exerciseName: 'Romanian Deadlifts (RDL)', sets: 4, reps: '8-10', restSeconds: 90 },
-            { exerciseName: 'Pull-Ups / Assisted Pull-Ups', sets: 3, reps: '8-10', restSeconds: 90 },
-            { exerciseName: 'Bulgarian Split Squats', sets: 3, reps: '10 each leg', restSeconds: 60 },
-            { exerciseName: 'Hanging Leg Raises', sets: 3, reps: '12-15', restSeconds: 45 },
-          ],
-        },
-      ],
+  if (!plan || !plan.days || plan.days.length === 0 || !plan.days[0].exercises[0]?.instructions) {
+    const generated = generateRuleBasedPlan({
+      fitnessGoal: profile.fitnessGoal,
+      experienceLevel: profile.experienceLevel,
+      plannedDaysPerWeek: profile.plannedDaysPerWeek || 5,
     });
+    if (plan) {
+      plan.name = generated.name;
+      plan.goal = generated.goal;
+      plan.experienceLevel = generated.experienceLevel;
+      plan.daysPerWeek = generated.daysPerWeek;
+      plan.days = generated.days;
+      await plan.save();
+    } else {
+      plan = await WorkoutPlan.create({
+        userId,
+        ...generated,
+      });
+    }
   }
 
   // 3. Fetch this month's attendance records
@@ -175,3 +126,154 @@ export const getMemberDashboardData = async (userId) => {
     todaysWorkout,
   };
 };
+
+export const getMemberWorkoutPlan = async (userId) => {
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = await FitnessProfile.create({
+      userId,
+      fitnessGoal: 'muscle_gain',
+      experienceLevel: 'intermediate',
+      plannedDaysPerWeek: 5,
+      preferredSchedule: 'evening',
+    });
+  }
+
+  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  // Check if plan needs initial generation or refresh
+  const needsRegen = !plan || !plan.days || plan.days.length === 0 || !plan.days[0].exercises[0]?.instructions;
+  if (needsRegen) {
+    const generated = generateRuleBasedPlan({
+      fitnessGoal: profile.fitnessGoal,
+      experienceLevel: profile.experienceLevel,
+      plannedDaysPerWeek: profile.plannedDaysPerWeek || 5,
+    });
+
+    if (plan) {
+      plan.name = generated.name;
+      plan.goal = generated.goal;
+      plan.experienceLevel = generated.experienceLevel;
+      plan.daysPerWeek = generated.daysPerWeek;
+      plan.days = generated.days;
+      await plan.save();
+    } else {
+      plan = await WorkoutPlan.create({
+        userId,
+        ...generated,
+      });
+    }
+  }
+
+  return { plan, profile };
+};
+
+export const updateMemberFitnessProfile = async (userId, updateData) => {
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = new FitnessProfile({ userId });
+  }
+
+  if (updateData.fitnessGoal) profile.fitnessGoal = updateData.fitnessGoal;
+  if (updateData.experienceLevel) profile.experienceLevel = updateData.experienceLevel;
+  if (updateData.plannedDaysPerWeek) profile.plannedDaysPerWeek = Number(updateData.plannedDaysPerWeek);
+  if (updateData.preferredSchedule) profile.preferredSchedule = updateData.preferredSchedule;
+
+  await profile.save();
+
+  // Generate new rule-based workout plan based on the updated profile
+  const generated = generateRuleBasedPlan({
+    fitnessGoal: profile.fitnessGoal,
+    experienceLevel: profile.experienceLevel,
+    plannedDaysPerWeek: profile.plannedDaysPerWeek,
+  });
+
+  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  if (plan) {
+    plan.name = generated.name;
+    plan.goal = generated.goal;
+    plan.experienceLevel = generated.experienceLevel;
+    plan.daysPerWeek = generated.daysPerWeek;
+    plan.days = generated.days;
+    await plan.save();
+  } else {
+    plan = await WorkoutPlan.create({
+      userId,
+      ...generated,
+    });
+  }
+
+  return { plan, profile };
+};
+
+export const regenerateMemberWorkoutPlan = async (userId, overrides = {}) => {
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = await FitnessProfile.create({
+      userId,
+      fitnessGoal: overrides.fitnessGoal || 'muscle_gain',
+      experienceLevel: overrides.experienceLevel || 'intermediate',
+      plannedDaysPerWeek: overrides.plannedDaysPerWeek || 5,
+      preferredSchedule: 'evening',
+    });
+  } else if (overrides.fitnessGoal || overrides.experienceLevel || overrides.plannedDaysPerWeek) {
+    if (overrides.fitnessGoal) profile.fitnessGoal = overrides.fitnessGoal;
+    if (overrides.experienceLevel) profile.experienceLevel = overrides.experienceLevel;
+    if (overrides.plannedDaysPerWeek) profile.plannedDaysPerWeek = Number(overrides.plannedDaysPerWeek);
+    await profile.save();
+  }
+
+  const generated = generateRuleBasedPlan({
+    fitnessGoal: profile.fitnessGoal,
+    experienceLevel: profile.experienceLevel,
+    plannedDaysPerWeek: profile.plannedDaysPerWeek,
+  });
+
+  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  if (plan) {
+    plan.name = generated.name;
+    plan.goal = generated.goal;
+    plan.experienceLevel = generated.experienceLevel;
+    plan.daysPerWeek = generated.daysPerWeek;
+    plan.days = generated.days;
+    await plan.save();
+  } else {
+    plan = await WorkoutPlan.create({
+      userId,
+      ...generated,
+    });
+  }
+
+  return { plan, profile };
+};
+
+export const toggleWorkoutDayCompletion = async (userId, dayNumber) => {
+  const plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  if (!plan) {
+    throw new Error('Active workout plan not found');
+  }
+
+  const dayIndex = plan.days.findIndex((d) => d.dayNumber === Number(dayNumber));
+  if (dayIndex === -1) {
+    throw new Error(`Workout day ${dayNumber} not found in plan`);
+  }
+
+  const currentStatus = plan.days[dayIndex].isCompleted;
+  plan.days[dayIndex].isCompleted = !currentStatus;
+  plan.days[dayIndex].completedAt = !currentStatus ? new Date() : null;
+
+  // Also update exercises in day
+  if (plan.days[dayIndex].exercises) {
+    plan.days[dayIndex].exercises.forEach((ex) => {
+      ex.isCompleted = !currentStatus;
+    });
+  }
+
+  await plan.save();
+  return {
+    dayNumber: Number(dayNumber),
+    isCompleted: plan.days[dayIndex].isCompleted,
+    completedAt: plan.days[dayIndex].completedAt,
+    plan,
+  };
+};
+

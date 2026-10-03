@@ -5,6 +5,10 @@ const exerciseItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  muscleGroup: {
+    type: String,
+    default: 'Full Body',
+  },
   sets: {
     type: Number,
     required: true,
@@ -18,6 +22,18 @@ const exerciseItemSchema = new mongoose.Schema({
   restSeconds: {
     type: Number,
     default: 60,
+  },
+  instructions: {
+    type: String,
+    default: '',
+  },
+  imageUrl: {
+    type: String,
+    default: '',
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -33,6 +49,14 @@ const workoutDaySchema = new mongoose.Schema({
   focus: {
     type: String,
     required: true,
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
+  completedAt: {
+    type: Date,
+    default: null,
   },
   exercises: [exerciseItemSchema],
 });
@@ -53,6 +77,10 @@ const workoutPlanSchema = new mongoose.Schema(
     goal: {
       type: String,
       default: 'muscle_gain',
+    },
+    experienceLevel: {
+      type: String,
+      default: 'intermediate',
     },
     daysPerWeek: {
       type: Number,
