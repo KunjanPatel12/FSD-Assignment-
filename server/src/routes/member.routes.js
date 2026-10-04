@@ -8,6 +8,9 @@ import {
   getAttendanceHistory,
   checkIn,
   checkOut,
+  getConsistencyReport,
+  getMemberProfile,
+  updateMemberProfile,
 } from '../controllers/member.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
@@ -17,6 +20,13 @@ router.use(protect);
 
 // Member Dashboard summary
 router.get('/dashboard', getDashboard);
+
+// Member Profile routes
+router.get('/profile', getMemberProfile);
+router.put('/profile', updateMemberProfile);
+
+// Member Consistency Report route
+router.get('/consistency', getConsistencyReport);
 
 // Member Attendance routes
 router.get('/attendance', getAttendanceHistory);

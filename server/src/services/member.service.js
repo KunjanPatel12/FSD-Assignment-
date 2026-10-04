@@ -3,6 +3,7 @@ import FitnessProfile from '../models/fitnessProfile.model.js';
 import WorkoutPlan from '../models/workoutPlan.model.js';
 import Attendance from '../models/attendance.model.js';
 import { generateRuleBasedPlan } from './workoutGenerator.service.js';
+import { findUserById } from './auth.service.js';
 
 export const getMemberDashboardData = async (userId) => {
   const user = await User.findById(userId).select('-password');
@@ -398,5 +399,260 @@ export const memberCheckOut = async (userId) => {
     return activeRecord;
   }
 };
+
+/**
+ * Consistency Report Calculation
+ * Formula: Actual attendance / expected training days × 100
+ * Accounts for planned training days, gym closed days, and Sundays closed.
+ */
+export const calculateConsistencyMetrics = ({
+  plannedDaysPerWeek = 5,
+  actualVisits = 0,
+  sundaysClosed = true,
+  year = new Date().getFullYear(),
+  month = new Date().getMonth(),
+}) => {
+  const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Count Sundays in month
+  let sundayCount = 0;
+  for (let day = 1; day <= totalDaysInMonth; day++) {
+    const d = new Date(year, month, day);
+    if (d.getDay() === 0) {
+      sundayCount++;
+    }
+  }
+
+  const gymClosedDays = sundaysClosed ? sundayCount : 0;
+  const gymOpenDays = totalDaysInMonth - gymClosedDays;
+
+  // Maximum days gym is open in a week
+  const maxWeeklyOpenDays = sundaysClosed ? 6 : 7;
+  const effectivePlannedDays = Math.min(Math.max(1, plannedDaysPerWeek), maxWeeklyOpenDays);
+
+  // Expected workout days = round(gymOpenDays * (effectivePlannedDays / maxWeeklyOpenDays))
+  const expectedWorkoutDays = Math.max(1, Math.round(gymOpenDays * (effectivePlannedDays / maxWeeklyOpenDays)));
+
+  // Consistency Percentage = (actualVisits / expectedWorkoutDays) * 100
+  const rawPercentage = (actualVisits / expectedWorkoutDays) * 100;
+  const consistencyPercentage = Math.min(100, Math.round(rawPercentage));
+
+  // Simple categories
+  let category = '';
+  let motivationalMessage = '';
+
+  if (consistencyPercentage >= 85) {
+    category = 'Excellent';
+    motivationalMessage = 'Outstanding commitment! You are crushing your fitness goals with stellar consistency.';
+  } else if (consistencyPercentage >= 70) {
+    category = 'Good';
+    motivationalMessage = 'Great discipline! Keep this strong momentum going toward your personal best.';
+  } else if (consistencyPercentage >= 50) {
+    category = 'Moderate';
+    motivationalMessage = "You're making steady progress. An extra session this week will elevate your results.";
+  } else {
+    category = 'Needs Improvement';
+    motivationalMessage = 'Every workout counts. Recommit to your schedule and take it one session at a time.';
+  }
+
+  return {
+    year,
+    month,
+    monthName: new Date(year, month, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+    totalDaysInMonth,
+    sundayCount,
+    gymClosedDays,
+    gymOpenDays,
+    sundaysClosed,
+    plannedDaysPerWeek: effectivePlannedDays,
+    expectedWorkoutDays,
+    actualGymVisits: actualVisits,
+    consistencyPercentage,
+    category,
+    motivationalMessage,
+  };
+};
+
+export const getMemberConsistencyReport = async (userId, customParams = {}) => {
+  const now = new Date();
+  const year = customParams.year ? Number(customParams.year) : now.getFullYear();
+  const month = customParams.month !== undefined ? Number(customParams.month) : now.getMonth();
+
+  // 1. Fetch user fitness profile for planned days
+  let profile = await FitnessProfile.findOne({ userId });
+  const plannedDays = customParams.plannedDays
+    ? Number(customParams.plannedDays)
+    : profile?.plannedDaysPerWeek || 5;
+
+  // 2. Fetch actual visits this month
+  const startOfMonth = new Date(year, month, 1);
+  const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+
+  let actualVisits = 0;
+  let records = [];
+
+  if (customParams.actualVisits !== undefined) {
+    actualVisits = Number(customParams.actualVisits);
+  } else {
+    try {
+      records = await Attendance.find({
+        userId,
+        checkInTime: { $gte: startOfMonth, $lte: endOfMonth },
+      }).sort({ checkInTime: -1 }).lean();
+      actualVisits = records.length;
+    } catch (err) {
+      actualVisits = 0;
+    }
+  }
+
+  const metrics = calculateConsistencyMetrics({
+    plannedDaysPerWeek: plannedDays,
+    actualVisits,
+    sundaysClosed: true,
+    year,
+    month,
+  });
+
+  return {
+    ...metrics,
+    records,
+  };
+};
+
+export const getMemberFullProfile = async (userId) => {
+  let user = null;
+  try {
+    user = await User.findById(userId).select('-password');
+  } catch (err) {
+    // fallback
+  }
+
+  if (!user) {
+    user = await findUserById(userId);
+  }
+
+  if (!user) {
+    const error = new Error('Member account not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Find or create fitness profile with default values if not present
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = await FitnessProfile.create({
+      userId,
+      age: 25,
+      height: 175,
+      weight: 72,
+      fitnessGoal: 'muscle_gain',
+      experienceLevel: 'intermediate',
+      plannedDaysPerWeek: 5,
+      preferredSchedule: 'morning',
+      membershipPlan: 'FitPulse Annual Pro',
+      membershipStatus: 'Active',
+      membershipExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    });
+  }
+
+  return {
+    account: {
+      id: user._id || user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone || '',
+      memberSince: user.createdAt,
+    },
+    membership: {
+      plan: profile.membershipPlan || 'FitPulse Annual Pro',
+      status: profile.membershipStatus || 'Active',
+      expiryDate: profile.membershipExpiry || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    },
+    fitness: {
+      age: profile.age || 25,
+      height: profile.height || 175,
+      weight: profile.weight || 72,
+      fitnessGoal: profile.fitnessGoal || 'muscle_gain',
+      experienceLevel: profile.experienceLevel || 'intermediate',
+      plannedDaysPerWeek: profile.plannedDaysPerWeek || 5,
+      preferredSchedule: profile.preferredSchedule || 'morning',
+    },
+  };
+};
+
+export const updateMemberFullProfile = async (userId, data) => {
+  let user = null;
+  try {
+    user = await User.findById(userId);
+  } catch (err) {
+    // fallback
+  }
+  if (!user) {
+    user = await findUserById(userId);
+  }
+
+  // Update user basic info
+  if (user) {
+    if (data.fullName && typeof data.fullName === 'string' && data.fullName.trim()) {
+      user.fullName = data.fullName.trim();
+    }
+    if (data.phone && typeof data.phone === 'string' && data.phone.trim()) {
+      user.phone = data.phone.trim();
+    }
+    await user.save();
+  }
+
+  // Update fitness profile
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = await FitnessProfile.create({ userId });
+  }
+
+  if (data.age !== undefined && data.age !== null) {
+    const ageNum = Number(data.age);
+    if (!isNaN(ageNum) && ageNum >= 14 && ageNum <= 100) {
+      profile.age = ageNum;
+    }
+  }
+
+  if (data.height !== undefined && data.height !== null) {
+    const hNum = Number(data.height);
+    if (!isNaN(hNum) && hNum >= 50 && hNum <= 260) {
+      profile.height = hNum;
+    }
+  }
+
+  if (data.weight !== undefined && data.weight !== null) {
+    const wNum = Number(data.weight);
+    if (!isNaN(wNum) && wNum >= 30 && wNum <= 300) {
+      profile.weight = wNum;
+    }
+  }
+
+  if (data.fitnessGoal && ['muscle_gain', 'fat_loss', 'strength', 'general_fitness', 'endurance'].includes(data.fitnessGoal)) {
+    profile.fitnessGoal = data.fitnessGoal;
+  }
+
+  if (data.experienceLevel && ['beginner', 'intermediate', 'advanced'].includes(data.experienceLevel)) {
+    profile.experienceLevel = data.experienceLevel;
+  }
+
+  if (data.plannedDaysPerWeek !== undefined && data.plannedDaysPerWeek !== null) {
+    const pDays = Number(data.plannedDaysPerWeek);
+    if (!isNaN(pDays) && pDays >= 1 && pDays <= 7) {
+      profile.plannedDaysPerWeek = pDays;
+    }
+  }
+
+  if (data.preferredSchedule && typeof data.preferredSchedule === 'string') {
+    profile.preferredSchedule = data.preferredSchedule;
+  }
+
+  await profile.save();
+
+  return await getMemberFullProfile(userId);
+};
+
+
 
 
