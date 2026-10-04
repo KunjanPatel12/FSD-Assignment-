@@ -9,6 +9,12 @@ const fitnessProfileSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    trainerId: {
+      type: mongoose.Schema.Types.Mixed,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
     age: {
       type: Number,
       default: 25,

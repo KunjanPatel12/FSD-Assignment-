@@ -1,5 +1,6 @@
 import React from 'react';
 import MemberDashboard from './MemberDashboard';
+import TrainerDashboard from './TrainerDashboard';
 
 function DashboardPage({ currentUser, onLogout }) {
   if (!currentUser) {
@@ -10,6 +11,10 @@ function DashboardPage({ currentUser, onLogout }) {
 
   if (role === 'member') {
     return <MemberDashboard currentUser={currentUser} />;
+  }
+
+  if (role === 'trainer') {
+    return <TrainerDashboard currentUser={currentUser} onLogout={onLogout} />;
   }
 
   return (
