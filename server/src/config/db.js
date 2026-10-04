@@ -1,21 +1,36 @@
 import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 let isConnected = false;
+let memoryServer = null;
 
 export const connectDB = async () => {
-  const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/fitpulse';
+  const mongoURI = process.env.MONGODB_URI;
+
+  if (mongoURI && mongoURI.trim() !== '') {
+    try {
+      const conn = await mongoose.connect(mongoURI, {
+        serverSelectionTimeoutMS: 4000,
+      });
+      isConnected = true;
+      console.log(`[MongoDB] Connected to database: ${conn.connection.host}/${conn.connection.name}`);
+      return conn;
+    } catch (error) {
+      console.warn(`[MongoDB] Warning: Failed to connect to MongoDB at ${mongoURI}. Falling back to in-memory instance.`);
+    }
+  }
 
   try {
-    const conn = await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 5000,
-    });
+    console.log('[MongoDB] Starting embedded in-memory MongoDB server...');
+    memoryServer = await MongoMemoryServer.create();
+    const uri = memoryServer.getUri();
+    const conn = await mongoose.connect(uri);
     isConnected = true;
-    console.log(`[MongoDB] Connected to database: ${conn.connection.host}/${conn.connection.name}`);
-  } catch (error) {
+    console.log(`[MongoDB] Connected to embedded in-memory database at: ${uri}`);
+    return conn;
+  } catch (err) {
     isConnected = false;
-    console.warn(`[MongoDB] Warning: Failed to connect to MongoDB at ${mongoURI}`);
-    console.warn(`[MongoDB] Error message: ${error.message}`);
-    console.warn('[MongoDB] Server will continue running, but database operations will be unavailable until MongoDB is started.');
+    console.error(`[MongoDB] Failed to initialize embedded MongoDB: ${err.message}`);
   }
 };
 

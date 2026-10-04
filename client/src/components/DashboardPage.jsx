@@ -1,4 +1,5 @@
 import React from 'react';
+import MemberDashboard from './MemberDashboard';
 
 function DashboardPage({ currentUser, onLogout }) {
   if (!currentUser) {
@@ -7,9 +8,13 @@ function DashboardPage({ currentUser, onLogout }) {
 
   const role = currentUser.role || 'member';
 
+  if (role === 'member') {
+    return <MemberDashboard currentUser={currentUser} />;
+  }
+
   return (
     <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-      {/* Welcome Banner */}
+      {/* Welcome Banner for Trainer/Admin */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -18,9 +23,7 @@ function DashboardPage({ currentUser, onLogout }) {
                 className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider border ${
                   role === 'admin'
                     ? 'bg-amber-50 text-amber-800 border-amber-200'
-                    : role === 'trainer'
-                    ? 'bg-blue-50 text-blue-800 border-blue-200'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-blue-50 text-blue-800 border-blue-200'
                 }`}
               >
                 {role} Dashboard
@@ -47,59 +50,6 @@ function DashboardPage({ currentUser, onLogout }) {
           </div>
         </div>
       </div>
-
-      {/* Role-Specific Content */}
-      {role === 'member' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
-                Membership Status
-              </span>
-              <p className="text-xl font-bold text-emerald-600">Active Member</p>
-              <p className="text-xs text-slate-500 mt-1">Full access to gym facilities &amp; tracking</p>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
-                Current Streak
-              </span>
-              <p className="text-xl font-bold text-slate-900">4 Days</p>
-              <p className="text-xs text-slate-500 mt-1">Consistent physical activity logged</p>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
-                Assigned Program
-              </span>
-              <p className="text-xl font-bold text-slate-900">Strength &amp; Conditioning</p>
-              <p className="text-xs text-slate-500 mt-1">Custom workout routines active</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h2 className="text-base font-bold text-slate-900 mb-3">Member Profile Summary</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-slate-500 block">Full Name:</span>
-                <span className="font-semibold text-slate-900">{currentUser.fullName}</span>
-              </div>
-              <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-slate-500 block">Email Address:</span>
-                <span className="font-semibold text-slate-900">{currentUser.email}</span>
-              </div>
-              <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-slate-500 block">Phone Number:</span>
-                <span className="font-semibold text-slate-900">{currentUser.phone || 'Not provided'}</span>
-              </div>
-              <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-slate-500 block">System Role:</span>
-                <span className="font-semibold text-emerald-700 capitalize">{currentUser.role}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {role === 'trainer' && (
         <div className="space-y-6">

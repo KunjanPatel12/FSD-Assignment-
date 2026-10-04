@@ -1,50 +1,93 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const memberNavItems = [
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'workouts', label: 'Workout Plan' },
+    { key: 'exercises', label: 'Exercise Library' },
+    { key: 'attendance', label: 'Attendance' },
+    { key: 'consistency', label: 'Consistency Report' },
+    { key: 'profile', label: 'Profile' },
+  ];
+
+  const handleNavClick = (viewKey) => {
+    onNavigate(viewKey);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <header className="w-full border-b border-gray-200 bg-white sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between">
-        {/* FitPulse Logo on the left */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        {/* FitPulse Logo */}
         <button
           type="button"
-          onClick={() => onNavigate(currentUser ? 'dashboard' : 'landing')}
+          onClick={() => handleNavClick(currentUser ? 'dashboard' : 'landing')}
           className="flex items-center space-x-2 focus:outline-none cursor-pointer"
           aria-label="FitPulse Home"
         >
           <img src="/logo.svg" alt="FitPulse Logo" className="h-8 sm:h-9 w-auto" />
         </button>
 
-        {/* Right side navigation actions */}
+        {/* Center Navigation Links for Authenticated Member */}
+        {currentUser && currentUser.role === 'member' && (
+          <nav className="hidden lg:flex items-center space-x-1">
+            {memberNavItems.map((item) => {
+              const isActive = currentView === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleNavClick(item.key)}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                    isActive
+                      ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        )}
+
+        {/* Right Side Actions */}
         <div className="flex items-center space-x-3">
           {currentUser ? (
-            // Authenticated Navbar
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-semibold text-slate-900">{currentUser.fullName}</p>
-                <p className="text-[11px] text-slate-500 capitalize">{currentUser.email}</p>
-              </div>
-
-              {/* Role badge */}
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium border capitalize ${
-                  currentUser.role === 'admin'
-                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                    : currentUser.role === 'trainer'
-                    ? 'bg-blue-50 text-blue-800 border-blue-200'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                }`}
-              >
-                {currentUser.role}
+            <div className="flex items-center space-x-3">
+              {/* Role Badge: MEMBER */}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {currentUser.role || 'MEMBER'}
               </span>
 
-              {/* Logout button */}
+              {/* Logout Button */}
               <button
                 type="button"
                 onClick={onLogout}
                 className="px-3.5 py-1.5 text-xs sm:text-sm font-medium text-slate-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none cursor-pointer"
               >
-                Log Out
+                Logout
               </button>
+
+              {/* Mobile menu hamburger button */}
+              {currentUser.role === 'member' && (
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="lg:hidden p-1.5 rounded-md text-slate-600 hover:text-slate-900 border border-gray-200 focus:outline-none cursor-pointer"
+                  aria-label="Toggle navigation menu"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+              )}
             </div>
           ) : (
             // Public Navbar
@@ -52,7 +95,7 @@ function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
               {currentView !== 'login' && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('login')}
+                  onClick={() => handleNavClick('login')}
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none cursor-pointer"
                 >
                   Sign In
@@ -62,7 +105,7 @@ function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
               {currentView !== 'register' && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('register')}
+                  onClick={() => handleNavClick('register')}
                   className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none shadow-sm cursor-pointer"
                 >
                   Get Started
@@ -72,7 +115,7 @@ function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
               {currentView !== 'landing' && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('landing')}
+                  onClick={() => handleNavClick('landing')}
                   className="px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 focus:outline-none cursor-pointer"
                 >
                   Home
@@ -82,6 +125,29 @@ function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown for Member */}
+      {currentUser && currentUser.role === 'member' && mobileMenuOpen && (
+        <div className="lg:hidden border-t border-gray-200 bg-white px-4 pt-2 pb-4 space-y-1">
+          {memberNavItems.map((item) => {
+            const isActive = currentView === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleNavClick(item.key)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'text-slate-700 hover:bg-gray-50'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </header>
   );
 }

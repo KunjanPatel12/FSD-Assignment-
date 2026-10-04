@@ -4,6 +4,11 @@ import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import DashboardPage from './components/DashboardPage';
+import WorkoutPlanPage from './components/WorkoutPlanPage';
+import ExerciseLibraryPage from './components/ExerciseLibraryPage';
+import AttendancePage from './components/AttendancePage';
+import ConsistencyReportPage from './components/ConsistencyReportPage';
+import ProfilePage from './components/ProfilePage';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -63,6 +68,11 @@ function App() {
       {currentView === 'dashboard' && (
         <DashboardPage currentUser={currentUser} onLogout={handleLogout} />
       )}
+      {currentView === 'workouts' && <WorkoutPlanPage />}
+      {currentView === 'exercises' && <ExerciseLibraryPage />}
+      {currentView === 'attendance' && <AttendancePage />}
+      {currentView === 'consistency' && <ConsistencyReportPage />}
+      {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
 
       {/* Clean Minimal Footer */}
       <footer className="w-full border-t border-gray-200 bg-white py-6 mt-auto">
