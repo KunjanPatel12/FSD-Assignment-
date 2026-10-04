@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
@@ -42,7 +43,7 @@ const seedDefaultAccounts = async () => {
     // Seed in-memory
     if (!inMemoryUsers.has(normalizedEmail)) {
       inMemoryUsers.set(normalizedEmail, {
-        _id: 'seed_' + seed.role,
+        _id: new mongoose.Types.ObjectId().toString(),
         fullName: seed.fullName,
         email: normalizedEmail,
         phone: seed.phone,

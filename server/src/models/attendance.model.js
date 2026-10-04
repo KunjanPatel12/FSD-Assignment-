@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const attendanceSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       index: true,
     },
@@ -20,12 +19,12 @@ const attendanceSchema = new mongoose.Schema(
     },
     durationMinutes: {
       type: Number,
-      default: 60,
+      default: 0,
     },
     status: {
       type: String,
       enum: ['active', 'completed'],
-      default: 'completed',
+      default: 'active',
     },
     dateKey: {
       type: String, // YYYY-MM-DD

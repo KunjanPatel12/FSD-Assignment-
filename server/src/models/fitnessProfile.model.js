@@ -3,11 +3,29 @@ import mongoose from 'mongoose';
 const fitnessProfileSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: 'User',
       required: true,
       unique: true,
       index: true,
+    },
+    age: {
+      type: Number,
+      default: 25,
+      min: 14,
+      max: 100,
+    },
+    height: {
+      type: Number, // in cm
+      default: 175,
+      min: 50,
+      max: 260,
+    },
+    weight: {
+      type: Number, // in kg
+      default: 72,
+      min: 30,
+      max: 300,
     },
     fitnessGoal: {
       type: String,
@@ -31,6 +49,19 @@ const fitnessProfileSchema = new mongoose.Schema(
     preferredSchedule: {
       type: String,
       default: 'morning',
+    },
+    membershipPlan: {
+      type: String,
+      default: 'FitPulse Annual Pro',
+    },
+    membershipStatus: {
+      type: String,
+      enum: ['Active', 'Pending', 'Expired', 'Frozen'],
+      default: 'Active',
+    },
+    membershipExpiry: {
+      type: Date,
+      default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     },
   },
   {

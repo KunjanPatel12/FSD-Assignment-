@@ -1,80 +1,692 @@
 import React, { useState, useEffect } from 'react';
 
 function ProfilePage({ currentUser }) {
-  const [data, setData] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Editable form state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    age: '',
+    height: '',
+    weight: '',
+    fitnessGoal: 'muscle_gain',
+    experienceLevel: 'intermediate',
+    plannedDaysPerWeek: 5,
+  });
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const token = localStorage.getItem('fitpulse_token');
+      const res = await fetch('/api/member/profile', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const result = await res.json();
+
+      if (res.ok && result.status === 'success' && result.data) {
+        setProfile(result.data);
+        populateFormData(result.data);
+      } else {
+        setMessage({
+          type: 'error',
+          text: result.message || 'Failed to load member profile data.',
+        });
+      }
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      setMessage({
+        type: 'error',
+        text: 'Network error while fetching profile. Please verify server connection.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const populateFormData = (data) => {
+    setFormData({
+      fullName: data.account?.fullName || '',
+      phone: data.account?.phone || '',
+      age: data.fitness?.age ?? 25,
+      height: data.fitness?.height ?? 175,
+      weight: data.fitness?.weight ?? 72,
+      fitnessGoal: data.fitness?.fitnessGoal || 'muscle_gain',
+      experienceLevel: data.fitness?.experienceLevel || 'intermediate',
+      plannedDaysPerWeek: data.fitness?.plannedDaysPerWeek ?? 5,
+    });
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('fitpulse_token');
-        const res = await fetch('/api/member/dashboard', {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        const result = await res.json();
-        if (result.status === 'success' && result.data) {
-          setData(result.data);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
     fetchProfile();
   }, []);
 
-  const formatText = (text) => {
-    if (!text) return '—';
-    return text
-      .split('_')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+
+  const handleCancel = () => {
+    if (profile) {
+      populateFormData(profile);
+    }
+    setIsEditing(false);
+    setMessage({ type: '', text: '' });
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage({ type: '', text: '' });
+
+    // Client-side validations
+    if (!formData.fullName.trim()) {
+      setMessage({ type: 'error', text: 'Full name cannot be empty.' });
+      setSaving(false);
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setMessage({ type: 'error', text: 'Phone number cannot be empty.' });
+      setSaving(false);
+      return;
+    }
+
+    const ageNum = Number(formData.age);
+    if (isNaN(ageNum) || ageNum < 14 || ageNum > 100) {
+      setMessage({ type: 'error', text: 'Age must be between 14 and 100 years.' });
+      setSaving(false);
+      return;
+    }
+
+    const heightNum = Number(formData.height);
+    if (isNaN(heightNum) || heightNum < 50 || heightNum > 260) {
+      setMessage({ type: 'error', text: 'Height must be between 50 and 260 cm.' });
+      setSaving(false);
+      return;
+    }
+
+    const weightNum = Number(formData.weight);
+    if (isNaN(weightNum) || weightNum < 30 || weightNum > 300) {
+      setMessage({ type: 'error', text: 'Weight must be between 30 and 300 kg.' });
+      setSaving(false);
+      return;
+    }
+
+    const daysNum = Number(formData.plannedDaysPerWeek);
+    if (isNaN(daysNum) || daysNum < 1 || daysNum > 7) {
+      setMessage({ type: 'error', text: 'Planned days per week must be between 1 and 7.' });
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('fitpulse_token');
+      const res = await fetch('/api/member/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName.trim(),
+          phone: formData.phone.trim(),
+          age: ageNum,
+          height: heightNum,
+          weight: weightNum,
+          fitnessGoal: formData.fitnessGoal,
+          experienceLevel: formData.experienceLevel,
+          plannedDaysPerWeek: daysNum,
+        }),
+      });
+
+      const result = await res.json();
+      if (res.ok && result.status === 'success' && result.data) {
+        setProfile(result.data);
+        populateFormData(result.data);
+        setIsEditing(false);
+        setMessage({
+          type: 'success',
+          text: 'Profile updated successfully!',
+        });
+
+        // Update stored user if fullName changed
+        try {
+          const storedUser = localStorage.getItem('fitpulse_user');
+          if (storedUser) {
+            const userObj = JSON.parse(storedUser);
+            userObj.fullName = result.data.account.fullName;
+            userObj.phone = result.data.account.phone;
+            localStorage.setItem('fitpulse_user', JSON.stringify(userObj));
+          }
+        } catch (err) {
+          // ignore localStorage sync error
+        }
+      } else {
+        setMessage({
+          type: 'error',
+          text: result.message || 'Failed to update profile.',
+        });
+      }
+    } catch (err) {
+      console.error('Save profile error:', err);
+      setMessage({
+        type: 'error',
+        text: 'Network error while saving profile. Please try again.',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return '—';
+    }
+  };
+
+  const formatGoal = (goal) => {
+    const map = {
+      muscle_gain: 'Muscle Gain',
+      fat_loss: 'Fat Loss',
+      strength: 'Strength & Power',
+      general_fitness: 'General Fitness',
+      endurance: 'Endurance & Cardio',
+    };
+    return map[goal] || goal || '—';
+  };
+
+  const formatLevel = (level) => {
+    const map = {
+      beginner: 'Beginner',
+      intermediate: 'Intermediate',
+      advanced: 'Advanced',
+    };
+    return map[level] || level || '—';
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'FP';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  if (loading) {
+    return (
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white border border-gray-200 rounded-lg p-12 text-center shadow-sm">
+          <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <h2 className="text-base font-semibold text-slate-900">Loading Member Profile...</h2>
+          <p className="text-xs text-slate-500 mt-1">Fetching your records from the database.</p>
+        </div>
+      </main>
+    );
+  }
+
+  const account = profile?.account || {};
+  const membership = profile?.membership || {};
+  const fitness = profile?.fitness || {};
 
   return (
     <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <span className="text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded inline-block mb-2">
-          Account Settings
-        </span>
-        <h1 className="text-2xl font-bold text-slate-900">Member Profile</h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          Review your personal credentials and configured gym preferences.
-        </p>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-gray-100">
-          Personal Information
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-            <span className="text-xs text-slate-500 block">Full Name</span>
-            <span className="font-semibold text-slate-900">
-              {data?.member?.fullName || currentUser?.fullName || '—'}
-            </span>
+      {/* Page Header Card */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-800 font-bold text-lg flex items-center justify-center border border-emerald-200 flex-shrink-0">
+            {getInitials(account.fullName || currentUser?.fullName)}
           </div>
-          <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-            <span className="text-xs text-slate-500 block">Email Address</span>
-            <span className="font-semibold text-slate-900">
-              {data?.member?.email || currentUser?.email || '—'}
-            </span>
-          </div>
-          <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-            <span className="text-xs text-slate-500 block">Current Goal</span>
-            <span className="font-semibold text-emerald-700">
-              {formatText(data?.currentGoal)}
-            </span>
-          </div>
-          <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-            <span className="text-xs text-slate-500 block">Fitness Level</span>
-            <span className="font-semibold text-slate-900">
-              {formatText(data?.fitnessLevel)}
-            </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {account.fullName || currentUser?.fullName || 'Member Profile'}
+              </h1>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {membership.status || 'Active'}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+              FitPulse Member Account &bull; Member since {formatDate(account.memberSince)}
+            </p>
           </div>
         </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {!isEditing ? (
+            <button
+              id="edit-profile-btn"
+              onClick={() => {
+                setIsEditing(true);
+                setMessage({ type: '', text: '' });
+              }}
+              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md border border-emerald-700 shadow-sm transition-colors"
+            >
+              Edit Profile
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={saving}
+                className="w-1/2 sm:w-auto px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-md border border-gray-300 shadow-sm transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="w-1/2 sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md border border-emerald-700 shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {saving ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Status Notifications */}
+      {message.text && (
+        <div
+          className={`p-4 rounded-md border text-sm font-medium ${
+            message.type === 'error'
+              ? 'bg-red-50 text-red-800 border-red-200'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Section 1: Account Information */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-3 mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Account Information</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Personal contact details registered with FitPulse.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+              Personal Identity
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Full Name */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="fullName" className="text-xs font-medium text-slate-600 block mb-1">
+                Full Name {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="e.g. John Doe"
+                />
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {account.fullName || '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Email Address (Read-only) */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-slate-600">Email Address</label>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 text-slate-400 bg-white border border-gray-200 rounded">
+                  Read Only
+                </span>
+              </div>
+              <span className="font-semibold text-slate-900 text-sm block">
+                {account.email || '—'}
+              </span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Official FitPulse login identity
+              </span>
+            </div>
+
+            {/* Phone Number */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="phone" className="text-xs font-medium text-slate-600 block mb-1">
+                Phone Number {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="e.g. +1 555-0199"
+                />
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {account.phone || '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Member Since (Read-only) */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-slate-600">Member Since</label>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 text-slate-400 bg-white border border-gray-200 rounded">
+                  System Record
+                </span>
+              </div>
+              <span className="font-semibold text-slate-900 text-sm block">
+                {formatDate(account.memberSince)}
+              </span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Registration timestamp in MongoDB
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Membership Information */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-3 mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Membership Information</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Current gym subscription tier, active standing, and expiration date.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Subscription
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Membership Plan */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-medium text-slate-600 block mb-1">
+                Membership Plan
+              </span>
+              <span className="font-semibold text-slate-900 text-sm block">
+                {membership.plan || 'FitPulse Annual Pro'}
+              </span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">Full gym access tier</span>
+            </div>
+
+            {/* Membership Status */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-medium text-slate-600 block mb-1">
+                Membership Status
+              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    membership.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                />
+                <span className="font-semibold text-slate-900 text-sm">
+                  {membership.status || 'Active'}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Good standing with facility
+              </span>
+            </div>
+
+            {/* Membership Expiry */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-medium text-slate-600 block mb-1">
+                Membership Expiry
+              </span>
+              <span className="font-semibold text-slate-900 text-sm block">
+                {formatDate(membership.expiryDate)}
+              </span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Annual renewal cycle
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-4 italic">
+            * Note: Membership plans, renewals, and payments are managed securely by FitPulse front desk administrators.
+          </p>
+        </div>
+
+        {/* Section 3: Fitness Information */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-3 mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Fitness Information</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Biometrics and gym workout goals used to generate your personalized program.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Training Metrics
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Age */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="age" className="text-xs font-medium text-slate-600 block mb-1">
+                Age (years) {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <input
+                  id="age"
+                  name="age"
+                  type="number"
+                  min="14"
+                  max="100"
+                  value={formData.age}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {fitness.age ? `${fitness.age} yrs` : '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Height */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="height" className="text-xs font-medium text-slate-600 block mb-1">
+                Height (cm) {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <input
+                  id="height"
+                  name="height"
+                  type="number"
+                  min="50"
+                  max="260"
+                  value={formData.height}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {fitness.height ? `${fitness.height} cm` : '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Weight */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="weight" className="text-xs font-medium text-slate-600 block mb-1">
+                Weight (kg) {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <input
+                  id="weight"
+                  name="weight"
+                  type="number"
+                  min="30"
+                  max="300"
+                  value={formData.weight}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {fitness.weight ? `${fitness.weight} kg` : '—'}
+                </span>
+              )}
+            </div>
+
+            {/* Fitness Goal */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label htmlFor="fitnessGoal" className="text-xs font-medium text-slate-600 block mb-1">
+                Fitness Goal {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <select
+                  id="fitnessGoal"
+                  name="fitnessGoal"
+                  value={formData.fitnessGoal}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="muscle_gain">Muscle Gain</option>
+                  <option value="fat_loss">Fat Loss</option>
+                  <option value="strength">Strength & Power</option>
+                  <option value="general_fitness">General Fitness</option>
+                  <option value="endurance">Endurance & Cardio</option>
+                </select>
+              ) : (
+                <span className="font-semibold text-emerald-700 text-sm block">
+                  {formatGoal(fitness.fitnessGoal)}
+                </span>
+              )}
+            </div>
+
+            {/* Experience Level */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label
+                htmlFor="experienceLevel"
+                className="text-xs font-medium text-slate-600 block mb-1"
+              >
+                Experience Level {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <select
+                  id="experienceLevel"
+                  name="experienceLevel"
+                  value={formData.experienceLevel}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="beginner">Beginner (0-1 yrs)</option>
+                  <option value="intermediate">Intermediate (1-3 yrs)</option>
+                  <option value="advanced">Advanced (3+ yrs)</option>
+                </select>
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {formatLevel(fitness.experienceLevel)}
+                </span>
+              )}
+            </div>
+
+            {/* Planned Training Days */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label
+                htmlFor="plannedDaysPerWeek"
+                className="text-xs font-medium text-slate-600 block mb-1"
+              >
+                Planned Training Days {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <select
+                  id="plannedDaysPerWeek"
+                  name="plannedDaysPerWeek"
+                  value={formData.plannedDaysPerWeek}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value={1}>1 Day / week</option>
+                  <option value={2}>2 Days / week</option>
+                  <option value={3}>3 Days / week</option>
+                  <option value={4}>4 Days / week</option>
+                  <option value={5}>5 Days / week</option>
+                  <option value={6}>6 Days / week</option>
+                  <option value={7}>7 Days / week</option>
+                </select>
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {fitness.plannedDaysPerWeek ? `${fitness.plannedDaysPerWeek} Days / week` : '—'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action button bar when editing */}
+        {isEditing && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={saving}
+              className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-md border border-gray-300 shadow-sm transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md border border-emerald-700 shadow-sm transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {saving ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Save Profile Changes'
+              )}
+            </button>
+          </div>
+        )}
+      </form>
     </main>
   );
 }
