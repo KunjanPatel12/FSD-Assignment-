@@ -4,6 +4,9 @@ import {
   updateMemberFitnessProfile,
   regenerateMemberWorkoutPlan,
   toggleWorkoutDayCompletion,
+  getMemberAttendance,
+  memberCheckIn,
+  memberCheckOut,
 } from '../services/member.service.js';
 
 export const getDashboard = async (req, res, next) => {
@@ -80,3 +83,54 @@ export const toggleDayCompletion = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getAttendanceHistory = async (req, res, next) => {
+  try {
+    const data = await getMemberAttendance(req.user.id);
+    return res.status(200).json({
+      status: 'success',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const checkIn = async (req, res, next) => {
+  try {
+    const record = await memberCheckIn(req.user.id);
+    return res.status(201).json({
+      status: 'success',
+      message: 'Checked in successfully',
+      data: record,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        status: 'error',
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
+export const checkOut = async (req, res, next) => {
+  try {
+    const record = await memberCheckOut(req.user.id);
+    return res.status(200).json({
+      status: 'success',
+      message: 'Checked out successfully',
+      data: record,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        status: 'error',
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+};
+

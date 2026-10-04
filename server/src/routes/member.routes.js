@@ -5,6 +5,9 @@ import {
   updateFitnessProfile,
   generateWorkoutPlan,
   toggleDayCompletion,
+  getAttendanceHistory,
+  checkIn,
+  checkOut,
 } from '../controllers/member.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
@@ -14,6 +17,11 @@ router.use(protect);
 
 // Member Dashboard summary
 router.get('/dashboard', getDashboard);
+
+// Member Attendance routes
+router.get('/attendance', getAttendanceHistory);
+router.post('/attendance/check-in', checkIn);
+router.post('/attendance/check-out', checkOut);
 
 // Member Workout Plan routes
 router.get('/workout-plan', getWorkoutPlan);

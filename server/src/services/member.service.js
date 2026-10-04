@@ -277,3 +277,126 @@ export const toggleWorkoutDayCompletion = async (userId, dayNumber) => {
   };
 };
 
+// In-memory attendance cache fallback if db is offline
+const inMemoryAttendance = [];
+
+export const getMemberAttendance = async (userId) => {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  let records = [];
+
+  try {
+    records = await Attendance.find({ userId }).sort({ checkInTime: -1 }).lean();
+  } catch (err) {
+    records = inMemoryAttendance
+      .filter((r) => String(r.userId) === String(userId))
+      .sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime));
+  }
+
+  // Calculate this month's visits
+  const thisMonthVisits = records.filter((r) => {
+    const d = new Date(r.checkInTime);
+    return d >= startOfMonth && d <= endOfMonth;
+  }).length;
+
+  // Find active check-in
+  const activeRecord = records.find((r) => !r.checkOutTime || r.status === 'active') || null;
+
+  return {
+    records,
+    thisMonthVisits,
+    activeCheckIn: activeRecord,
+  };
+};
+
+export const memberCheckIn = async (userId) => {
+  const now = new Date();
+  const dateKey = now.toISOString().slice(0, 10);
+
+  // Check if already checked in (active session without check-out)
+  let existingActive = null;
+  try {
+    existingActive = await Attendance.findOne({
+      userId,
+      $or: [{ checkOutTime: null }, { status: 'active' }],
+    });
+  } catch (err) {
+    existingActive = inMemoryAttendance.find(
+      (r) => String(r.userId) === String(userId) && (!r.checkOutTime || r.status === 'active')
+    );
+  }
+
+  if (existingActive) {
+    const error = new Error('You are already checked in. Please check out before checking in again.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const newRecordData = {
+    userId,
+    checkInTime: now,
+    checkOutTime: null,
+    durationMinutes: 0,
+    status: 'active',
+    dateKey,
+  };
+
+  let savedRecord = null;
+  try {
+    savedRecord = await Attendance.create(newRecordData);
+    savedRecord = savedRecord.toObject ? savedRecord.toObject() : savedRecord;
+  } catch (err) {
+    savedRecord = {
+      _id: 'att_' + Date.now(),
+      ...newRecordData,
+      createdAt: now,
+      updatedAt: now,
+    };
+    inMemoryAttendance.unshift(savedRecord);
+  }
+
+  return savedRecord;
+};
+
+export const memberCheckOut = async (userId) => {
+  const checkOutTime = new Date();
+
+  let activeRecord = null;
+  try {
+    activeRecord = await Attendance.findOne({
+      userId,
+      $or: [{ checkOutTime: null }, { status: 'active' }],
+    }).sort({ checkInTime: -1 });
+  } catch (err) {
+    activeRecord = inMemoryAttendance.find(
+      (r) => String(r.userId) === String(userId) && (!r.checkOutTime || r.status === 'active')
+    );
+  }
+
+  if (!activeRecord) {
+    const error = new Error('No active check-in found to check out.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const checkInTime = new Date(activeRecord.checkInTime);
+  const durationMinutes = Math.max(1, Math.round((checkOutTime.getTime() - checkInTime.getTime()) / 60000));
+
+  if (activeRecord.save) {
+    activeRecord.checkOutTime = checkOutTime;
+    activeRecord.durationMinutes = durationMinutes;
+    activeRecord.status = 'completed';
+    await activeRecord.save();
+    return activeRecord.toObject ? activeRecord.toObject() : activeRecord;
+  } else {
+    activeRecord.checkOutTime = checkOutTime;
+    activeRecord.durationMinutes = durationMinutes;
+    activeRecord.status = 'completed';
+    activeRecord.updatedAt = checkOutTime;
+    return activeRecord;
+  }
+};
+
+
