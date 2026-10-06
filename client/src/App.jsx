@@ -69,7 +69,7 @@ function App() {
         <DashboardPage currentUser={currentUser} onLogout={handleLogout} />
       )}
       {currentView === 'workouts' && <WorkoutPlanPage />}
-      {currentView === 'exercises' && <ExerciseLibraryPage />}
+      {currentView === 'exercises' && <ExerciseLibraryPage currentUser={currentUser} />}
       {currentView === 'attendance' && <AttendancePage />}
       {currentView === 'consistency' && <ConsistencyReportPage />}
       {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
