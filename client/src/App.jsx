@@ -9,6 +9,9 @@ import ExerciseLibraryPage from './components/ExerciseLibraryPage';
 import AttendancePage from './components/AttendancePage';
 import ConsistencyReportPage from './components/ConsistencyReportPage';
 import ProfilePage from './components/ProfilePage';
+import AdminDashboard from './components/AdminDashboard';
+import AdminUsersPage from './components/AdminUsersPage';
+import AdminSchedulePage from './components/AdminSchedulePage';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -66,13 +69,25 @@ function App() {
         <RegisterPage onNavigate={setCurrentView} onAuthSuccess={handleAuthSuccess} />
       )}
       {currentView === 'dashboard' && (
-        <DashboardPage currentUser={currentUser} onLogout={handleLogout} />
+        <DashboardPage currentUser={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />
       )}
       {currentView === 'workouts' && <WorkoutPlanPage />}
       {currentView === 'exercises' && <ExerciseLibraryPage currentUser={currentUser} />}
       {currentView === 'attendance' && <AttendancePage />}
       {currentView === 'consistency' && <ConsistencyReportPage />}
       {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
+      {currentView === 'admin-users' && (
+        <AdminUsersPage
+          currentUser={currentUser}
+          onNavigate={setCurrentView}
+        />
+      )}
+      {currentView === 'admin-schedule' && (
+        <AdminSchedulePage
+          currentUser={currentUser}
+          onNavigate={setCurrentView}
+        />
+      )}
 
       {/* Clean Minimal Footer */}
       <footer className="w-full border-t border-gray-200 bg-white py-6 mt-auto">

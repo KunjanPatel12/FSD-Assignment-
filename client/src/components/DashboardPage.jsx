@@ -1,8 +1,9 @@
 import React from 'react';
 import MemberDashboard from './MemberDashboard';
 import TrainerDashboard from './TrainerDashboard';
+import AdminDashboard from './AdminDashboard';
 
-function DashboardPage({ currentUser, onLogout }) {
+function DashboardPage({ currentUser, onLogout, onNavigate }) {
   if (!currentUser) {
     return null;
   }
@@ -15,6 +16,10 @@ function DashboardPage({ currentUser, onLogout }) {
 
   if (role === 'trainer') {
     return <TrainerDashboard currentUser={currentUser} onLogout={onLogout} />;
+  }
+
+  if (role === 'admin') {
+    return <AdminDashboard currentUser={currentUser} onLogout={onLogout} onNavigate={onNavigate} />;
   }
 
   return (
