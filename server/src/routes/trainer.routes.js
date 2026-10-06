@@ -2,6 +2,13 @@ import express from 'express';
 import {
   getAssignedMembers,
   getMemberDetails,
+  getTrainerPlans,
+  createTrainerPlan,
+  getTrainerPlanById,
+  updateTrainerPlan,
+  deleteTrainerPlan,
+  assignPlanToMember,
+  updateMemberAssignedPlan,
 } from '../controllers/trainer.controller.js';
 import { protect, restrictTo } from '../middleware/auth.middleware.js';
 
@@ -17,4 +24,18 @@ router.get('/members', getAssignedMembers);
 // Trainee details with workout plan
 router.get('/members/:memberId', getMemberDetails);
 
+// Assign a plan to a member
+router.post('/members/:memberId/assign-plan', assignPlanToMember);
+
+// Direct update of member's assigned workout plan
+router.put('/members/:memberId/workout-plan', updateMemberAssignedPlan);
+
+// Workout Plans CRUD for trainer library
+router.get('/plans', getTrainerPlans);
+router.post('/plans', createTrainerPlan);
+router.get('/plans/:planId', getTrainerPlanById);
+router.put('/plans/:planId', updateTrainerPlan);
+router.delete('/plans/:planId', deleteTrainerPlan);
+
 export default router;
+

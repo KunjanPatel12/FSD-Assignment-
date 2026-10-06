@@ -141,8 +141,9 @@ export const getMemberWorkoutPlan = async (userId) => {
   }
 
   let plan = await WorkoutPlan.findOne({ userId, isActive: true });
-  // Check if plan needs initial generation or refresh
-  const needsRegen = !plan || !plan.days || plan.days.length === 0 || !plan.days[0].exercises[0]?.instructions;
+  // Check if plan needs initial generation or refresh (never overwrite custom/trainer plans)
+  const isTrainerAssigned = Boolean(plan?.isCustom || plan?.assignedBy);
+  const needsRegen = !isTrainerAssigned && (!plan || !plan.days || plan.days.length === 0);
   if (needsRegen) {
     const generated = generateRuleBasedPlan({
       fitnessGoal: profile.fitnessGoal,

@@ -193,12 +193,19 @@ function WorkoutPlanPage() {
       <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded inline-block mb-2">
-              Member Program
-            </span>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded inline-block">
+                Member Program
+              </span>
+              {plan?.assignedByName && (
+                <span className="text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded inline-block">
+                  Assigned by Trainer: {plan.assignedByName}
+                </span>
+              )}
+            </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Workout Plan</h1>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              {plan?.name || 'Personalized Fitness Routine'} &bull; Structured {daysList.length}-day schedule derived from your fitness profile.
+              <strong className="text-slate-800 font-semibold">{plan?.name || 'Personalized Fitness Routine'}</strong> &bull; Structured {daysList.length}-day schedule.
             </p>
           </div>
 

@@ -171,6 +171,9 @@ export const getMemberDetailsForTrainer = async (trainerId, memberId) => {
       goal: plan.goal,
       experienceLevel: plan.experienceLevel,
       daysPerWeek: plan.daysPerWeek,
+      assignedBy: plan.assignedBy,
+      assignedByName: plan.assignedByName,
+      isCustom: plan.isCustom || Boolean(plan.assignedBy),
       days: plan.days.map((d) => ({
         dayNumber: d.dayNumber,
         dayName: d.dayName,
@@ -181,6 +184,7 @@ export const getMemberDetailsForTrainer = async (trainerId, memberId) => {
           sets: ex.sets,
           reps: ex.reps,
           restSeconds: ex.restSeconds,
+          rest: ex.rest || `${ex.restSeconds || 60}s`,
           instructions: ex.instructions || '',
           targetMuscle: ex.targetMuscle || d.focus,
         })),
@@ -188,3 +192,379 @@ export const getMemberDetailsForTrainer = async (trainerId, memberId) => {
     },
   };
 };
+
+/**
+ * Retrieve all workout plans / templates created by trainer or globally available
+ */
+export const getTrainerPlans = async (trainerId) => {
+  let plans = await WorkoutPlan.find({
+    $or: [{ trainerId }, { isTemplate: true }],
+    userId: { $exists: false },
+  }).sort({ updatedAt: -1 });
+
+  // If no reusable plans exist, seed starter templates for the trainer
+  if (plans.length === 0) {
+    const starterPlans = [
+      {
+        name: '3-Day Full Body Conditioning',
+        goal: 'general_fitness',
+        experienceLevel: 'beginner',
+        daysPerWeek: 3,
+        isTemplate: true,
+        isCustom: true,
+        trainerId,
+        days: [
+          {
+            dayNumber: 1,
+            dayName: 'Day 1 - Foundation & Core',
+            focus: 'Full Body',
+            exercises: [
+              { exerciseName: 'Barbell Back Squat', sets: 3, reps: '10', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Dumbbell Bench Press', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Seated Cable Row', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Plank Hold', sets: 3, reps: '45s', restSeconds: 45, rest: '45s' },
+            ],
+          },
+          {
+            dayNumber: 2,
+            dayName: 'Day 2 - Posterior Chain & Push',
+            focus: 'Full Body',
+            exercises: [
+              { exerciseName: 'Romanian Deadlift', sets: 3, reps: '10', restSeconds: 75, rest: '75s' },
+              { exerciseName: 'Overhead Dumbbell Press', sets: 3, reps: '10', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Lat Pulldown', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Hanging Knee Raise', sets: 3, reps: '15', restSeconds: 45, rest: '45s' },
+            ],
+          },
+          {
+            dayNumber: 3,
+            dayName: 'Day 3 - Strength & Stability',
+            focus: 'Full Body',
+            exercises: [
+              { exerciseName: 'Leg Press', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Incline Dumbbell Press', sets: 3, reps: '10', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Dumbbell Bicep Curl', sets: 3, reps: '12', restSeconds: 45, rest: '45s' },
+              { exerciseName: 'Tricep Rope Pushdown', sets: 3, reps: '12', restSeconds: 45, rest: '45s' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '4-Day Upper / Lower Split',
+        goal: 'muscle_gain',
+        experienceLevel: 'intermediate',
+        daysPerWeek: 4,
+        isTemplate: true,
+        isCustom: true,
+        trainerId,
+        days: [
+          {
+            dayNumber: 1,
+            dayName: 'Day 1 - Upper Body Push & Pull',
+            focus: 'Upper Body',
+            exercises: [
+              { exerciseName: 'Barbell Bench Press', sets: 4, reps: '8-10', restSeconds: 90, rest: '90s' },
+              { exerciseName: 'Bent-Over Barbell Row', sets: 4, reps: '8-10', restSeconds: 90, rest: '90s' },
+              { exerciseName: 'Dumbbell Shoulder Press', sets: 3, reps: '10-12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Lateral Raises', sets: 3, reps: '15', restSeconds: 45, rest: '45s' },
+            ],
+          },
+          {
+            dayNumber: 2,
+            dayName: 'Day 2 - Lower Body Quad & Hamstring',
+            focus: 'Lower Body',
+            exercises: [
+              { exerciseName: 'Barbell Back Squat', sets: 4, reps: '8', restSeconds: 120, rest: '120s' },
+              { exerciseName: 'Walking Lunges', sets: 3, reps: '12/leg', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Leg Extension', sets: 3, reps: '12-15', restSeconds: 45, rest: '45s' },
+              { exerciseName: 'Calf Raises', sets: 4, reps: '15', restSeconds: 45, rest: '45s' },
+            ],
+          },
+          {
+            dayNumber: 3,
+            dayName: 'Day 3 - Upper Body Hypertrophy',
+            focus: 'Upper Body',
+            exercises: [
+              { exerciseName: 'Incline Dumbbell Bench Press', sets: 4, reps: '10-12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Cable Lat Pulldown', sets: 4, reps: '10-12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Dumbbell Hammer Curls', sets: 3, reps: '12', restSeconds: 45, rest: '45s' },
+              { exerciseName: 'Overhead Tricep Extension', sets: 3, reps: '12', restSeconds: 45, rest: '45s' },
+            ],
+          },
+          {
+            dayNumber: 4,
+            dayName: 'Day 4 - Lower Body & Core',
+            focus: 'Lower Body',
+            exercises: [
+              { exerciseName: 'Deadlift', sets: 3, reps: '5', restSeconds: 120, rest: '120s' },
+              { exerciseName: 'Leg Press', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Lying Leg Curl', sets: 3, reps: '12', restSeconds: 60, rest: '60s' },
+              { exerciseName: 'Cable Woodchopper', sets: 3, reps: '15', restSeconds: 45, rest: '45s' },
+            ],
+          },
+        ],
+      },
+    ];
+
+    await WorkoutPlan.insertMany(starterPlans);
+    plans = await WorkoutPlan.find({
+      $or: [{ trainerId }, { isTemplate: true }],
+      userId: { $exists: false },
+    }).sort({ updatedAt: -1 });
+  }
+
+  return plans;
+};
+
+/**
+ * Format raw days array into structured schema
+ */
+const formatDaysArray = (daysInput) => {
+  if (!Array.isArray(daysInput) || daysInput.length === 0) {
+    return [
+      {
+        dayNumber: 1,
+        dayName: 'Day 1',
+        focus: 'Workout',
+        exercises: [
+          {
+            exerciseName: 'Push Ups',
+            sets: 3,
+            reps: '10-12',
+            restSeconds: 60,
+            rest: '60s',
+          },
+        ],
+      },
+    ];
+  }
+
+  return daysInput.map((day, idx) => {
+    const dayNumber = Number(day.dayNumber) || idx + 1;
+    const dayName = (day.dayName && day.dayName.trim()) || `Day ${dayNumber}`;
+    const focus = (day.focus && day.focus.trim()) || dayName;
+    const exercises = Array.isArray(day.exercises)
+      ? day.exercises.map((ex) => ({
+          exerciseName: (ex.exerciseName && ex.exerciseName.trim()) || 'Exercise',
+          sets: Number(ex.sets) || 3,
+          reps: ex.reps ? String(ex.reps).trim() : '10-12',
+          restSeconds: Number(ex.restSeconds) || (typeof ex.rest === 'string' ? parseInt(ex.rest, 10) || 60 : 60),
+          rest: ex.rest ? String(ex.rest).trim() : `${ex.restSeconds || 60}s`,
+          muscleGroup: ex.muscleGroup || focus,
+          instructions: ex.instructions || '',
+        }))
+      : [];
+
+    return {
+      dayNumber,
+      dayName,
+      focus,
+      exercises,
+    };
+  });
+};
+
+/**
+ * Create a new workout plan (template) in trainer library
+ */
+export const createTrainerPlan = async (trainerId, planData) => {
+  const { name, goal, days, daysPerWeek } = planData;
+
+  if (!name || !name.trim()) {
+    const error = new Error('Plan name is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const formattedDays = formatDaysArray(days);
+
+  const newPlan = await WorkoutPlan.create({
+    name: name.trim(),
+    goal: goal || 'general_fitness',
+    daysPerWeek: daysPerWeek || formattedDays.length,
+    trainerId,
+    isTemplate: true,
+    isCustom: true,
+    days: formattedDays,
+  });
+
+  return newPlan;
+};
+
+/**
+ * Get plan by ID
+ */
+export const getTrainerPlanById = async (trainerId, planId) => {
+  const plan = await WorkoutPlan.findById(planId);
+  if (!plan) {
+    const error = new Error('Workout plan not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return plan;
+};
+
+/**
+ * Update an existing workout plan in trainer library
+ */
+export const updateTrainerPlan = async (trainerId, planId, updateData) => {
+  const plan = await WorkoutPlan.findById(planId);
+  if (!plan) {
+    const error = new Error('Workout plan not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (updateData.name && updateData.name.trim()) {
+    plan.name = updateData.name.trim();
+  }
+  if (updateData.goal) {
+    plan.goal = updateData.goal;
+  }
+  if (updateData.days) {
+    plan.days = formatDaysArray(updateData.days);
+    plan.daysPerWeek = plan.days.length;
+  }
+
+  await plan.save();
+  return plan;
+};
+
+/**
+ * Delete a workout plan from trainer library
+ */
+export const deleteTrainerPlan = async (trainerId, planId) => {
+  const plan = await WorkoutPlan.findById(planId);
+  if (!plan) {
+    const error = new Error('Workout plan not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await WorkoutPlan.findByIdAndDelete(planId);
+  return { message: 'Workout plan deleted successfully', id: planId };
+};
+
+/**
+ * Assign a workout plan to an assigned trainee member
+ */
+export const assignPlanToMember = async (trainerId, memberId, payload) => {
+  const member = await User.findById(memberId);
+  if (!member || member.role !== 'member') {
+    const error = new Error('Member not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const trainer = await User.findById(trainerId);
+  const trainerName = trainer ? trainer.fullName : 'Trainer';
+
+  let planSource = null;
+
+  if (payload.planId) {
+    const existingPlan = await WorkoutPlan.findById(payload.planId);
+    if (!existingPlan) {
+      const error = new Error('Selected workout plan not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    planSource = {
+      name: existingPlan.name,
+      goal: existingPlan.goal,
+      experienceLevel: existingPlan.experienceLevel,
+      daysPerWeek: existingPlan.days.length,
+      days: existingPlan.days,
+    };
+  } else if (payload.planData) {
+    const formattedDays = formatDaysArray(payload.planData.days);
+    planSource = {
+      name: (payload.planData.name && payload.planData.name.trim()) || 'Custom Workout Plan',
+      goal: payload.planData.goal || 'general_fitness',
+      experienceLevel: payload.planData.experienceLevel || 'intermediate',
+      daysPerWeek: formattedDays.length,
+      days: formattedDays,
+    };
+  } else {
+    const error = new Error('Either planId or planData must be provided');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Deactivate any currently active plans for this member
+  await WorkoutPlan.updateMany({ userId: memberId, isActive: true }, { $set: { isActive: false } });
+
+  // Create new active workout plan linked to this member
+  const newActivePlan = await WorkoutPlan.create({
+    userId: memberId,
+    trainerId,
+    assignedBy: trainerId,
+    assignedByName: trainerName,
+    name: planSource.name,
+    goal: planSource.goal || 'general_fitness',
+    experienceLevel: planSource.experienceLevel || 'intermediate',
+    daysPerWeek: planSource.days.length,
+    isActive: true,
+    isCustom: true,
+    days: planSource.days,
+  });
+
+  // Ensure member's fitness profile links to this trainer and updates planned days
+  await FitnessProfile.findOneAndUpdate(
+    { userId: memberId },
+    {
+      $set: {
+        trainerId,
+        plannedDaysPerWeek: planSource.days.length,
+      },
+    },
+    { upsert: true }
+  );
+
+  return newActivePlan;
+};
+
+/**
+ * Update the member's currently assigned workout plan directly
+ */
+export const updateMemberAssignedPlan = async (trainerId, memberId, updateData) => {
+  const trainer = await User.findById(trainerId);
+  const trainerName = trainer ? trainer.fullName : 'Trainer';
+
+  let plan = await WorkoutPlan.findOne({ userId: memberId, isActive: true });
+  if (!plan) {
+    // If no active plan, create one
+    const formattedDays = formatDaysArray(updateData.days);
+    plan = await WorkoutPlan.create({
+      userId: memberId,
+      trainerId,
+      assignedBy: trainerId,
+      assignedByName: trainerName,
+      name: (updateData.name && updateData.name.trim()) || 'Custom Workout Plan',
+      goal: updateData.goal || 'general_fitness',
+      daysPerWeek: formattedDays.length,
+      isActive: true,
+      isCustom: true,
+      days: formattedDays,
+    });
+    return plan;
+  }
+
+  if (updateData.name && updateData.name.trim()) {
+    plan.name = updateData.name.trim();
+  }
+  if (updateData.goal) {
+    plan.goal = updateData.goal;
+  }
+  if (updateData.days) {
+    plan.days = formatDaysArray(updateData.days);
+    plan.daysPerWeek = plan.days.length;
+  }
+
+  plan.assignedBy = trainerId;
+  plan.assignedByName = trainerName;
+  plan.isCustom = true;
+
+  await plan.save();
+  return plan;
+};
+
