@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import FitnessProfile from '../models/fitnessProfile.model.js';
+import { getDBStatus } from '../config/db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fitpulse_super_secret_jwt_key_2026';
 
@@ -43,3 +45,28 @@ export const restrictTo = (...roles) => {
   };
 };
 
+export const requireActiveMembership = async (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'member') {
+      return next(); // Skip for admin/trainer, or let restrictTo handle role logic
+    }
+
+    if (getDBStatus().isConnected) {
+      const profile = await FitnessProfile.findOne({ userId: req.user.id });
+      if (!profile || profile.membershipStatus !== 'Active') {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Access Denied: You need an active membership to use this feature.',
+        });
+      }
+    }
+    // If not connected to DB, we skip or assume active in memory fallback (for demo simplicity)
+    
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to verify membership status.',
+    });
+  }
+};

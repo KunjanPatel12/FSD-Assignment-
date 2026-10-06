@@ -12,7 +12,7 @@ import {
   getMemberProfile,
   updateMemberProfile,
 } from '../controllers/member.controller.js';
-import { protect } from '../middleware/auth.middleware.js';
+import { protect, requireActiveMembership } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -26,17 +26,17 @@ router.get('/profile', getMemberProfile);
 router.put('/profile', updateMemberProfile);
 
 // Member Consistency Report route
-router.get('/consistency', getConsistencyReport);
+router.get('/consistency', requireActiveMembership, getConsistencyReport);
 
 // Member Attendance routes
-router.get('/attendance', getAttendanceHistory);
-router.post('/attendance/check-in', checkIn);
-router.post('/attendance/check-out', checkOut);
+router.get('/attendance', requireActiveMembership, getAttendanceHistory);
+router.post('/attendance/check-in', requireActiveMembership, checkIn);
+router.post('/attendance/check-out', requireActiveMembership, checkOut);
 
 // Member Workout Plan routes
-router.get('/workout-plan', getWorkoutPlan);
-router.post('/workout-plan/generate', generateWorkoutPlan);
-router.patch('/workout-plan/day/:dayNumber/toggle-complete', toggleDayCompletion);
+router.get('/workout-plan', requireActiveMembership, getWorkoutPlan);
+router.post('/workout-plan/generate', requireActiveMembership, generateWorkoutPlan);
+router.patch('/workout-plan/day/:dayNumber/toggle-complete', requireActiveMembership, toggleDayCompletion);
 router.put('/fitness-profile', updateFitnessProfile);
 
 export default router;

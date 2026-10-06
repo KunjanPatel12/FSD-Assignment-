@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
+import FitnessProfile from '../models/fitnessProfile.model.js';
 import { getDBStatus } from '../config/db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fitpulse_super_secret_jwt_key_2026';
@@ -141,7 +142,7 @@ export const generateToken = (user) => {
  * CRITICAL SECURITY:
  * Force role = 'member' on the backend regardless of payload input.
  */
-export const registerMember = async ({ fullName, email, phone, password }) => {
+export const registerMember = async ({ fullName, email, phone, password, age, height, weight, fitnessGoal, experienceLevel, plannedDaysPerWeek }) => {
   const normalizedEmail = (email || '').toLowerCase().trim();
 
   // Check duplicate email in Mongo or in-memory
@@ -176,6 +177,16 @@ export const registerMember = async ({ fullName, email, phone, password }) => {
   if (getDBStatus().isConnected) {
     const newUser = await User.create(userPayload);
     savedUser = newUser.toObject();
+
+    await FitnessProfile.create({
+      userId: savedUser._id,
+      age: age || 25,
+      height: height || 175,
+      weight: weight || 72,
+      fitnessGoal: fitnessGoal || 'muscle_gain',
+      experienceLevel: experienceLevel || 'beginner',
+      plannedDaysPerWeek: plannedDaysPerWeek || 5,
+    });
   } else {
     savedUser = {
       _id: 'mem_' + Date.now(),
