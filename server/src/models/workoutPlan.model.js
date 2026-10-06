@@ -23,6 +23,10 @@ const exerciseItemSchema = new mongoose.Schema({
     type: Number,
     default: 60,
   },
+  rest: {
+    type: String,
+    default: '60s',
+  },
   instructions: {
     type: String,
     default: '',
@@ -48,7 +52,7 @@ const workoutDaySchema = new mongoose.Schema({
   },
   focus: {
     type: String,
-    required: true,
+    default: 'Workout',
   },
   isCompleted: {
     type: Boolean,
@@ -66,8 +70,21 @@ const workoutPlanSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
       index: true,
+    },
+    trainerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+    },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    assignedByName: {
+      type: String,
+      default: '',
     },
     name: {
       type: String,
@@ -76,7 +93,7 @@ const workoutPlanSchema = new mongoose.Schema(
     },
     goal: {
       type: String,
-      default: 'muscle_gain',
+      default: 'general_fitness',
     },
     experienceLevel: {
       type: String,
@@ -85,6 +102,14 @@ const workoutPlanSchema = new mongoose.Schema(
     daysPerWeek: {
       type: Number,
       default: 5,
+    },
+    isTemplate: {
+      type: Boolean,
+      default: false,
+    },
+    isCustom: {
+      type: Boolean,
+      default: false,
     },
     isActive: {
       type: Boolean,
