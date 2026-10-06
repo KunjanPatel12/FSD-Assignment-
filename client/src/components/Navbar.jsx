@@ -17,8 +17,16 @@ function Navbar({ currentView, onNavigate, currentUser, onLogout }) {
     { key: 'exercises', label: 'Exercise Library' },
   ];
 
+  const adminNavItems = [
+    { key: 'dashboard', label: 'Admin Center' },
+    { key: 'admin-users', label: 'Users' },
+    { key: 'admin-schedule', label: 'Gym Operating Schedule' },
+  ];
+
   const activeNavItems =
-    currentUser?.role === 'trainer'
+    currentUser?.role === 'admin'
+      ? adminNavItems
+      : currentUser?.role === 'trainer'
       ? trainerNavItems
       : currentUser?.role === 'member'
       ? memberNavItems

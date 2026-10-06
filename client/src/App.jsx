@@ -9,6 +9,7 @@ import ExerciseLibraryPage from './components/ExerciseLibraryPage';
 import AttendancePage from './components/AttendancePage';
 import ConsistencyReportPage from './components/ConsistencyReportPage';
 import ProfilePage from './components/ProfilePage';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -73,6 +74,14 @@ function App() {
       {currentView === 'attendance' && <AttendancePage />}
       {currentView === 'consistency' && <ConsistencyReportPage />}
       {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
+      {(currentView === 'admin-users' || currentView === 'admin-schedule') && (
+        <AdminDashboard
+          currentUser={currentUser}
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* Clean Minimal Footer */}
       <footer className="w-full border-t border-gray-200 bg-white py-6 mt-auto">
