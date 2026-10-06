@@ -47,12 +47,12 @@ function ConsistencyReportPage() {
   // Mathematical consistency calculation function
   const calculateMetrics = (plannedDays, actual, sundaysClosed) => {
     const totalDaysInMonth = report?.totalDaysInMonth || 31;
-    const sundayCount = report?.sundayCount || 4;
-
-    const gymClosedDays = sundaysClosed ? sundayCount : 0;
+    const configuredClosed = report?.gymClosedDays !== undefined ? report.gymClosedDays : (sundaysClosed ? 4 : 0);
+    const gymClosedDays = sundaysClosed ? configuredClosed : 0;
     const gymOpenDays = totalDaysInMonth - gymClosedDays;
 
-    const maxWeeklyOpenDays = sundaysClosed ? 6 : 7;
+    const weeklyOpen = report?.openDays?.length || (sundaysClosed ? 6 : 7);
+    const maxWeeklyOpenDays = Math.max(1, weeklyOpen);
     const effectivePlanned = Math.min(Math.max(1, Number(plannedDays)), maxWeeklyOpenDays);
 
     // Expected workout days = round(gymOpenDays * (effectivePlanned / maxWeeklyOpenDays))
@@ -237,16 +237,25 @@ function ConsistencyReportPage() {
                 <span className="text-base font-bold text-slate-900">{activeMetrics?.totalDaysInMonth} Days</span>
               </div>
               <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-slate-500 block">Gym Closed (Sundays):</span>
+                <span className="text-slate-500 block">Gym Closed Days:</span>
                 <span className="text-base font-bold text-slate-900">{activeMetrics?.gymClosedDays} Days</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5 truncate">
+                  {report?.closedDays?.length > 0 ? report.closedDays.join(', ') : 'None'}
+                </span>
               </div>
               <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
                 <span className="text-slate-500 block">Gym Open Days:</span>
                 <span className="text-base font-bold text-slate-900">{activeMetrics?.gymOpenDays} Days</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5 truncate">
+                  {report?.openDays?.length || 6} days/wk ({report?.openingTime || '6 AM'} - {report?.closingTime || '10 PM'})
+                </span>
               </div>
               <div className="p-3 bg-slate-50 border border-gray-200 rounded-md">
                 <span className="text-slate-500 block">Planned Schedule:</span>
                 <span className="text-base font-bold text-slate-900">{activeMetrics?.effectivePlanned} Days / Week</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  Member target
+                </span>
               </div>
             </div>
           </div>

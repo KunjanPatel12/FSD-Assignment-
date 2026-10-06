@@ -4,6 +4,7 @@ import { protect, restrictTo } from '../middleware/auth.middleware.js';
 import User from '../models/user.model.js';
 import FitnessProfile from '../models/fitnessProfile.model.js';
 import Attendance from '../models/attendance.model.js';
+import GymSchedule from '../models/gymSchedule.model.js';
 
 const router = express.Router();
 
@@ -142,17 +143,92 @@ router.patch('/users/:userId/status', async (req, res, next) => {
   }
 });
 
-// Admin Gym Operating Schedule
-router.get('/schedule', async (req, res) => {
-  const schedule = [
-    { day: 'Monday – Friday', hours: '06:00 AM – 10:00 PM', status: 'Full Operations' },
-    { day: 'Saturday', hours: '07:00 AM – 09:00 PM', status: 'Weekend Training' },
-    { day: 'Sunday', hours: '08:00 AM – 08:00 PM', status: 'Open Gym & Recovery' },
-  ];
-  return res.status(200).json({
-    status: 'success',
-    data: schedule,
-  });
+// Admin Gym Operating Schedule - GET active schedule from MongoDB
+router.get('/schedule', async (req, res, next) => {
+  try {
+    let schedule = await GymSchedule.findOne().lean();
+    if (!schedule) {
+      schedule = await GymSchedule.create({
+        openDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        closedDays: ['Sunday'],
+        openingTime: '06:00 AM',
+        closingTime: '10:00 PM',
+        notes: 'Standard facility operating schedule',
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: schedule,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Admin Gym Operating Schedule - PUT / UPDATE schedule in MongoDB
+router.put('/schedule', async (req, res, next) => {
+  try {
+    const { openDays, closedDays, openingTime, closingTime, notes } = req.body;
+
+    const validDays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+
+    if (!Array.isArray(openDays) || openDays.length === 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'At least one operating day must be configured as open.',
+      });
+    }
+
+    // Filter and sanitize days
+    const sanitizedOpen = openDays.filter((d) => validDays.includes(d));
+    if (sanitizedOpen.length === 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid open days provided.',
+      });
+    }
+
+    // Derive closed days: any valid day not in openDays
+    const sanitizedClosed = Array.isArray(closedDays)
+      ? closedDays.filter((d) => validDays.includes(d) && !sanitizedOpen.includes(d))
+      : validDays.filter((d) => !sanitizedOpen.includes(d));
+
+    const finalOpeningTime = (openingTime && String(openingTime).trim()) || '06:00 AM';
+    const finalClosingTime = (closingTime && String(closingTime).trim()) || '10:00 PM';
+    const finalNotes = typeof notes === 'string' ? notes.trim() : 'Standard facility operating schedule';
+
+    const updated = await GymSchedule.findOneAndUpdate(
+      {},
+      {
+        $set: {
+          openDays: sanitizedOpen,
+          closedDays: sanitizedClosed,
+          openingTime: finalOpeningTime,
+          closingTime: finalClosingTime,
+          notes: finalNotes,
+          lastUpdatedBy: req.user?._id || null,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Gym operating schedule saved successfully.',
+      data: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

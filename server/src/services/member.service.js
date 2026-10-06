@@ -2,6 +2,7 @@ import User from '../models/user.model.js';
 import FitnessProfile from '../models/fitnessProfile.model.js';
 import WorkoutPlan from '../models/workoutPlan.model.js';
 import Attendance from '../models/attendance.model.js';
+import GymSchedule from '../models/gymSchedule.model.js';
 import { generateRuleBasedPlan } from './workoutGenerator.service.js';
 import { findUserById } from './auth.service.js';
 
@@ -404,31 +405,57 @@ export const memberCheckOut = async (userId) => {
 /**
  * Consistency Report Calculation
  * Formula: Actual attendance / expected training days × 100
- * Accounts for planned training days, gym closed days, and Sundays closed.
+ * Uses configured Gym Operating Schedule from MongoDB (openDays, closedDays).
  */
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 export const calculateConsistencyMetrics = ({
   plannedDaysPerWeek = 5,
   actualVisits = 0,
-  sundaysClosed = true,
+  openDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  closedDays = ['Sunday'],
+  openingTime = '06:00 AM',
+  closingTime = '10:00 PM',
+  sundaysClosed = null,
   year = new Date().getFullYear(),
   month = new Date().getMonth(),
 }) => {
   const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Count Sundays in month
+  // If sundaysClosed is explicitly provided (e.g. from scenario simulation testing), respect it
+  let effectiveOpenDays = Array.isArray(openDays) && openDays.length > 0 ? [...openDays] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  let effectiveClosedDays = Array.isArray(closedDays) ? [...closedDays] : ['Sunday'];
+
+  if (sundaysClosed === true && !effectiveClosedDays.includes('Sunday')) {
+    effectiveClosedDays.push('Sunday');
+    effectiveOpenDays = effectiveOpenDays.filter((d) => d !== 'Sunday');
+  } else if (sundaysClosed === false && effectiveClosedDays.includes('Sunday')) {
+    effectiveClosedDays = effectiveClosedDays.filter((d) => d !== 'Sunday');
+    if (!effectiveOpenDays.includes('Sunday')) effectiveOpenDays.push('Sunday');
+  }
+
+  // Count days in month based on configured schedule
   let sundayCount = 0;
+  let gymClosedDays = 0;
+  let gymOpenDays = 0;
+
   for (let day = 1; day <= totalDaysInMonth; day++) {
     const d = new Date(year, month, day);
+    const dayName = DAY_NAMES[d.getDay()];
     if (d.getDay() === 0) {
       sundayCount++;
     }
+
+    const isClosed = effectiveClosedDays.includes(dayName) || !effectiveOpenDays.includes(dayName);
+    if (isClosed) {
+      gymClosedDays++;
+    } else {
+      gymOpenDays++;
+    }
   }
 
-  const gymClosedDays = sundaysClosed ? sundayCount : 0;
-  const gymOpenDays = totalDaysInMonth - gymClosedDays;
-
   // Maximum days gym is open in a week
-  const maxWeeklyOpenDays = sundaysClosed ? 6 : 7;
+  const maxWeeklyOpenDays = Math.max(1, effectiveOpenDays.length);
   const effectivePlannedDays = Math.min(Math.max(1, plannedDaysPerWeek), maxWeeklyOpenDays);
 
   // Expected workout days = round(gymOpenDays * (effectivePlannedDays / maxWeeklyOpenDays))
@@ -464,7 +491,11 @@ export const calculateConsistencyMetrics = ({
     sundayCount,
     gymClosedDays,
     gymOpenDays,
-    sundaysClosed,
+    openDays: effectiveOpenDays,
+    closedDays: effectiveClosedDays,
+    openingTime,
+    closingTime,
+    sundaysClosed: effectiveClosedDays.includes('Sunday'),
     plannedDaysPerWeek: effectivePlannedDays,
     expectedWorkoutDays,
     actualGymVisits: actualVisits,
@@ -506,10 +537,24 @@ export const getMemberConsistencyReport = async (userId, customParams = {}) => {
     }
   }
 
+  // 3. Load active Gym Operating Schedule from MongoDB
+  let schedule = await GymSchedule.findOne().lean();
+  if (!schedule) {
+    schedule = {
+      openDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      closedDays: ['Sunday'],
+      openingTime: '06:00 AM',
+      closingTime: '10:00 PM',
+    };
+  }
+
   const metrics = calculateConsistencyMetrics({
     plannedDaysPerWeek: plannedDays,
     actualVisits,
-    sundaysClosed: true,
+    openDays: schedule.openDays,
+    closedDays: schedule.closedDays,
+    openingTime: schedule.openingTime,
+    closingTime: schedule.closingTime,
     year,
     month,
   });

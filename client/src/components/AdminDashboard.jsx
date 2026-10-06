@@ -8,7 +8,7 @@ function AdminDashboard({ currentUser, currentView = 'dashboard', onNavigate }) 
     todaysAttendance: 0,
   });
   const [users, setUsers] = useState([]);
-  const [schedule, setSchedule] = useState([]);
+  const [schedule, setSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,7 +42,7 @@ function AdminDashboard({ currentUser, currentView = 'dashboard', onNavigate }) 
       // Fetch operating schedule
       const schedRes = await fetch('/api/admin/schedule', { headers });
       const schedResult = await schedRes.json();
-      if (schedRes.ok && schedResult.status === 'success' && Array.isArray(schedResult.data)) {
+      if (schedRes.ok && schedResult.status === 'success' && schedResult.data) {
         setSchedule(schedResult.data);
       }
     } catch (err) {
@@ -243,7 +243,7 @@ function AdminDashboard({ currentUser, currentView = 'dashboard', onNavigate }) 
         </div>
       )}
 
-      {/* Section View: Gym Operating Schedule (when viewing Schedule or default overview) */}
+      {/* Section View: Gym Operating Schedule */}
       {(currentView === 'admin-schedule' || currentView === 'dashboard') && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
@@ -253,21 +253,54 @@ function AdminDashboard({ currentUser, currentView = 'dashboard', onNavigate }) 
                 Standard facility hours and training availability.
               </p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-              Active Schedule
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                Active Schedule
+              </span>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('admin-schedule')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors"
+                >
+                  Configure Schedule &rarr;
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {schedule.map((item, idx) => (
-              <div key={idx} className="p-4 bg-slate-50 border border-gray-200 rounded-md">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
-                  {item.day}
-                </span>
-                <p className="text-lg font-bold text-slate-900">{item.hours}</p>
-                <p className="text-xs text-emerald-700 font-medium mt-1">{item.status}</p>
-              </div>
-            ))}
+            <div className="p-4 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                Open Days ({schedule?.openDays?.length || 6} Days)
+              </span>
+              <p className="text-sm font-bold text-slate-900">
+                {schedule?.openDays?.join(', ') || 'Monday – Saturday'}
+              </p>
+              <p className="text-xs text-emerald-700 font-medium mt-1">Full Operations</p>
+            </div>
+
+            <div className="p-4 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                Closed Days ({schedule?.closedDays?.length || 1} Days)
+              </span>
+              <p className="text-sm font-bold text-slate-900">
+                {schedule?.closedDays?.length > 0 ? schedule.closedDays.join(', ') : 'None (Open 7 Days)'}
+              </p>
+              <p className="text-xs text-slate-500 font-medium mt-1">Weekly Facility Rest</p>
+            </div>
+
+            <div className="p-4 bg-slate-50 border border-gray-200 rounded-md">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                Operating Hours
+              </span>
+              <p className="text-sm font-bold text-slate-900">
+                {schedule?.openingTime || '06:00 AM'} &ndash; {schedule?.closingTime || '10:00 PM'}
+              </p>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                {schedule?.notes || 'Standard facility schedule'}
+              </p>
+            </div>
           </div>
         </div>
       )}

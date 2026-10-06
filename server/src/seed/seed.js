@@ -3,6 +3,7 @@ import User from '../models/user.model.js';
 import FitnessProfile from '../models/fitnessProfile.model.js';
 import WorkoutPlan from '../models/workoutPlan.model.js';
 import Attendance from '../models/attendance.model.js';
+import GymSchedule from '../models/gymSchedule.model.js';
 import { generateRuleBasedPlan } from '../services/workoutGenerator.service.js';
 
 export const seedDatabase = async () => {
@@ -10,6 +11,19 @@ export const seedDatabase = async () => {
     const demoPassword = 'Password123!';
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(demoPassword, salt);
+
+    // 0. Seed default Gym Operating Schedule if not present
+    let schedule = await GymSchedule.findOne();
+    if (!schedule) {
+      schedule = await GymSchedule.create({
+        openDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        closedDays: ['Sunday'],
+        openingTime: '06:00 AM',
+        closingTime: '10:00 PM',
+        notes: 'Standard facility operating schedule',
+      });
+      console.log('🗓️ [Seed] Default gym operating schedule created.');
+    }
 
     // 1. Seed Trainer & Admin first so members can be linked
     let trainer = await User.findOne({ email: 'trainer@fitpulse.local' });

@@ -11,6 +11,7 @@ import ConsistencyReportPage from './components/ConsistencyReportPage';
 import ProfilePage from './components/ProfilePage';
 import AdminDashboard from './components/AdminDashboard';
 import AdminUsersPage from './components/AdminUsersPage';
+import AdminSchedulePage from './components/AdminSchedulePage';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -82,11 +83,9 @@ function App() {
         />
       )}
       {currentView === 'admin-schedule' && (
-        <AdminDashboard
+        <AdminSchedulePage
           currentUser={currentUser}
-          currentView={currentView}
           onNavigate={setCurrentView}
-          onLogout={handleLogout}
         />
       )}
 
