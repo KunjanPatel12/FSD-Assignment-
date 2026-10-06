@@ -186,9 +186,20 @@ function AdminDashboard({ currentUser, currentView = 'dashboard', onNavigate }) 
                 Overview of current members, trainers, and administrative accounts.
               </p>
             </div>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-              {users.length} Users
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                {users.length} Users
+              </span>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('admin-users')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors"
+                >
+                  Manage Users &rarr;
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">

@@ -10,6 +10,7 @@ import AttendancePage from './components/AttendancePage';
 import ConsistencyReportPage from './components/ConsistencyReportPage';
 import ProfilePage from './components/ProfilePage';
 import AdminDashboard from './components/AdminDashboard';
+import AdminUsersPage from './components/AdminUsersPage';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -67,14 +68,20 @@ function App() {
         <RegisterPage onNavigate={setCurrentView} onAuthSuccess={handleAuthSuccess} />
       )}
       {currentView === 'dashboard' && (
-        <DashboardPage currentUser={currentUser} onLogout={handleLogout} />
+        <DashboardPage currentUser={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />
       )}
       {currentView === 'workouts' && <WorkoutPlanPage />}
       {currentView === 'exercises' && <ExerciseLibraryPage currentUser={currentUser} />}
       {currentView === 'attendance' && <AttendancePage />}
       {currentView === 'consistency' && <ConsistencyReportPage />}
       {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
-      {(currentView === 'admin-users' || currentView === 'admin-schedule') && (
+      {currentView === 'admin-users' && (
+        <AdminUsersPage
+          currentUser={currentUser}
+          onNavigate={setCurrentView}
+        />
+      )}
+      {currentView === 'admin-schedule' && (
         <AdminDashboard
           currentUser={currentUser}
           currentView={currentView}
