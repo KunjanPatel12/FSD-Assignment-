@@ -111,6 +111,11 @@ const workoutPlanSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    planType: {
+      type: String,
+      enum: ['recommended', 'custom'],
+      default: 'recommended',
+    },
     isActive: {
       type: Boolean,
       default: true,

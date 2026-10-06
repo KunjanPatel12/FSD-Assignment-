@@ -12,6 +12,7 @@ import ProfilePage from './components/ProfilePage';
 import AdminDashboard from './components/AdminDashboard';
 import AdminUsersPage from './components/AdminUsersPage';
 import AdminSchedulePage from './components/AdminSchedulePage';
+import MembershipPage from './components/MembershipPage';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -75,7 +76,8 @@ function App() {
       {currentView === 'exercises' && <ExerciseLibraryPage currentUser={currentUser} />}
       {currentView === 'attendance' && <AttendancePage />}
       {currentView === 'consistency' && <ConsistencyReportPage />}
-      {currentView === 'profile' && <ProfilePage currentUser={currentUser} />}
+      {currentView === 'profile' && <ProfilePage currentUser={currentUser} onNavigate={setCurrentView} />}
+      {currentView === 'membership' && <MembershipPage currentUser={currentUser} onNavigate={setCurrentView} />}
       {currentView === 'admin-users' && (
         <AdminUsersPage
           currentUser={currentUser}
@@ -88,14 +90,6 @@ function App() {
           onNavigate={setCurrentView}
         />
       )}
-
-      {/* Clean Minimal Footer */}
-      <footer className="w-full border-t border-gray-200 bg-white py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <span>&copy; {new Date().getFullYear()} FitPulse. All rights reserved.</span>
-          <span>Clean Full-Stack College Project</span>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function ProfilePage({ currentUser }) {
+function ProfilePage({ currentUser, onNavigate }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -14,9 +14,10 @@ function ProfilePage({ currentUser }) {
     age: '',
     height: '',
     weight: '',
-    fitnessGoal: 'muscle_gain',
     experienceLevel: 'intermediate',
     plannedDaysPerWeek: 5,
+    preferredSchedule: 'morning',
+    wantsTrainer: false,
   });
 
   const fetchProfile = async () => {
@@ -58,10 +59,11 @@ function ProfilePage({ currentUser }) {
       phone: data.account?.phone || '',
       age: data.fitness?.age ?? 25,
       height: data.fitness?.height ?? 175,
-      weight: data.fitness?.weight ?? 72,
       fitnessGoal: data.fitness?.fitnessGoal || 'muscle_gain',
       experienceLevel: data.fitness?.experienceLevel || 'intermediate',
       plannedDaysPerWeek: data.fitness?.plannedDaysPerWeek ?? 5,
+      preferredSchedule: data.fitness?.preferredSchedule || 'morning',
+      wantsTrainer: data.fitness?.wantsTrainer || false,
     });
   };
 
@@ -70,10 +72,10 @@ function ProfilePage({ currentUser }) {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -144,10 +146,11 @@ function ProfilePage({ currentUser }) {
           phone: formData.phone.trim(),
           age: ageNum,
           height: heightNum,
-          weight: weightNum,
           fitnessGoal: formData.fitnessGoal,
           experienceLevel: formData.experienceLevel,
           plannedDaysPerWeek: daysNum,
+          preferredSchedule: formData.preferredSchedule,
+          wantsTrainer: Boolean(formData.wantsTrainer),
         }),
       });
 
@@ -266,23 +269,32 @@ function ProfilePage({ currentUser }) {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-              FitPulse Member Account &bull; Member since {formatDate(account.memberSince)}
+              Member ID: {account.id || 'N/A'} &bull; Member since {formatDate(account.memberSince)}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {!isEditing ? (
-            <button
-              id="edit-profile-btn"
-              onClick={() => {
-                setIsEditing(true);
-                setMessage({ type: '', text: '' });
-              }}
-              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md border border-emerald-700 shadow-sm transition-colors"
-            >
-              Edit Profile
-            </button>
+            <>
+              <button
+                id="edit-profile-btn"
+                onClick={() => {
+                  setIsEditing(true);
+                  setMessage({ type: '', text: '' });
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-md border border-emerald-700 shadow-sm transition-colors"
+              >
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-md border border-gray-300 shadow-sm transition-colors"
+                onClick={() => alert('Change password functionality coming soon.')}
+              >
+                Change Password
+              </button>
+            </>
           ) : (
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
@@ -404,6 +416,16 @@ function ProfilePage({ currentUser }) {
               )}
             </div>
 
+            {/* Member ID */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Member ID
+              </label>
+              <span className="font-semibold text-slate-900 text-sm block">
+                {account.id || '—'}
+              </span>
+            </div>
+
             {/* Member Since (Read-only) */}
             <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
               <div className="flex items-center justify-between mb-1">
@@ -436,50 +458,48 @@ function ProfilePage({ currentUser }) {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Membership Plan */}
-            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-              <span className="text-xs font-medium text-slate-600 block mb-1">
-                Membership Plan
-              </span>
-              <span className="font-semibold text-slate-900 text-sm block">
-                {membership.plan || 'FitPulse Annual Pro'}
-              </span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">Full gym access tier</span>
-            </div>
-
-            {/* Membership Status */}
-            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-              <span className="text-xs font-medium text-slate-600 block mb-1">
-                Membership Status
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    membership.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'
-                  }`}
-                />
-                <span className="font-semibold text-slate-900 text-sm">
-                  {membership.status || 'Active'}
-                </span>
+          <div className="grid grid-cols-1 gap-4">
+            {membership.status === 'Active' ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-md">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 block mb-1">
+                    Active
+                  </span>
+                  <p className="text-sm font-semibold text-slate-900">{membership.plan}</p>
+                </div>
+                <div className="mt-2 sm:mt-0 text-left sm:text-right">
+                  <p className="text-xs text-slate-600">
+                    <span className="font-medium text-slate-900">Start Date:</span> {formatDate(account.memberSince)}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    <span className="font-medium text-slate-900">Expiry Date:</span> {formatDate(membership.expiryDate)}
+                  </p>
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">
-                Good standing with facility
-              </span>
-            </div>
-
-            {/* Membership Expiry */}
-            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
-              <span className="text-xs font-medium text-slate-600 block mb-1">
-                Membership Expiry
-              </span>
-              <span className="font-semibold text-slate-900 text-sm block">
-                {formatDate(membership.expiryDate)}
-              </span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">
-                Annual renewal cycle
-              </span>
-            </div>
+            ) : (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md flex flex-col sm:flex-row items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-slate-900 block mb-1">
+                    No Active Membership
+                  </span>
+                  <p className="text-xs text-slate-600">
+                    You currently do not have an active gym pass.
+                  </p>
+                </div>
+                <a
+                  href="/#membership"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigate) {
+                      onNavigate('membership');
+                    }
+                  }}
+                  className="mt-3 sm:mt-0 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-md hover:bg-emerald-700 shadow-sm cursor-pointer"
+                >
+                  Select Membership Plan
+                </a>
+              </div>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-4 italic">
             * Note: Membership plans, renewals, and payments are managed securely by FitPulse front desk administrators.
@@ -656,6 +676,67 @@ function ProfilePage({ currentUser }) {
                 </span>
               )}
             </div>
+            {/* Preferred Workout Time */}
+            <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md">
+              <label
+                htmlFor="preferredSchedule"
+                className="text-xs font-medium text-slate-600 block mb-1"
+              >
+                Preferred Workout Time {isEditing && <span className="text-emerald-700 font-bold">*</span>}
+              </label>
+              {isEditing ? (
+                <select
+                  id="preferredSchedule"
+                  name="preferredSchedule"
+                  value={formData.preferredSchedule}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="evening">Evening</option>
+                </select>
+              ) : (
+                <span className="font-semibold text-slate-900 text-sm block">
+                  {fitness.preferredSchedule ? fitness.preferredSchedule.charAt(0).toUpperCase() + fitness.preferredSchedule.slice(1) : '—'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Trainer Preference */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="border-b border-gray-100 pb-3 mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Trainer Preference</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Indicate if you would like to work with a personal trainer.
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Coaching
+            </span>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-gray-200 rounded-md max-w-sm">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="wantsTrainer"
+                checked={formData.wantsTrainer}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+              />
+              <span className="text-sm font-semibold text-slate-900">
+                I want a personal trainer
+              </span>
+            </label>
+            {!isEditing && (
+              <p className="text-xs text-slate-500 mt-2">
+                Status: {fitness.wantsTrainer ? 'Yes, trainer requested' : 'No trainer requested'}
+              </p>
+            )}
           </div>
         </div>
 

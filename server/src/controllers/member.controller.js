@@ -10,6 +10,8 @@ import {
   getMemberConsistencyReport,
   getMemberFullProfile,
   updateMemberFullProfile,
+  simulatePaymentService,
+  createMemberCustomWorkoutPlan,
 } from '../services/member.service.js';
 
 export const getDashboard = async (req, res, next) => {
@@ -76,7 +78,7 @@ export const generateWorkoutPlan = async (req, res, next) => {
 export const toggleDayCompletion = async (req, res, next) => {
   try {
     const { dayNumber } = req.params;
-    const data = await toggleWorkoutDayCompletion(req.user.id, dayNumber);
+    const data = await toggleWorkoutDayCompletion(req.user.id, dayNumber, req.body?.planId);
     return res.status(200).json({
       status: 'success',
       message: `Workout Day ${dayNumber} marked as ${data.isCompleted ? 'completed' : 'incomplete'}`,
@@ -174,5 +176,28 @@ export const updateMemberProfile = async (req, res, next) => {
   }
 };
 
+export const simulateMembershipPayment = async (req, res, next) => {
+  try {
+    const data = await simulatePaymentService(req.user.id, req.body);
+    return res.status(200).json({
+      status: 'success',
+      message: 'Payment simulated successfully',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-
+export const createCustomWorkoutPlan = async (req, res, next) => {
+  try {
+    const data = await createMemberCustomWorkoutPlan(req.user.id, req.body);
+    return res.status(201).json({
+      status: 'success',
+      message: 'Custom workout plan created successfully',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

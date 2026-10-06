@@ -15,6 +15,10 @@ const fitnessProfileSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    wantsTrainer: {
+      type: Boolean,
+      default: false,
+    },
     age: {
       type: Number,
       default: 25,
@@ -63,7 +67,7 @@ const fitnessProfileSchema = new mongoose.Schema(
     membershipStatus: {
       type: String,
       enum: ['Active', 'Pending', 'Expired', 'Frozen'],
-      default: 'Active',
+      default: 'Pending',
     },
     membershipExpiry: {
       type: Date,

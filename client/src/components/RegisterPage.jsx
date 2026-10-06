@@ -13,6 +13,8 @@ function RegisterPage({ onNavigate, onAuthSuccess }) {
     fitnessGoal: 'muscle_gain',
     experienceLevel: 'beginner',
     plannedDaysPerWeek: 5,
+    preferredSchedule: 'morning',
+    wantsTrainer: 'no',
   });
 
   const [error, setError] = useState(null);
@@ -80,6 +82,8 @@ function RegisterPage({ onNavigate, onAuthSuccess }) {
         fitnessGoal: formData.fitnessGoal,
         experienceLevel: formData.experienceLevel,
         plannedDaysPerWeek: Number(formData.plannedDaysPerWeek),
+        preferredSchedule: formData.preferredSchedule,
+        wantsTrainer: formData.wantsTrainer === 'yes',
       };
 
       const res = await fetch('/api/auth/register', {
@@ -289,6 +293,41 @@ function RegisterPage({ onNavigate, onAuthSuccess }) {
                 placeholder="5"
                 className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
               />
+            </div>
+
+            {/* Schedule & Trainer Preference */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="preferredSchedule" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Preferred Time <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="preferredSchedule"
+                  name="preferredSchedule"
+                  value={formData.preferredSchedule}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="evening">Evening</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="wantsTrainer" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Do you want a trainer? <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="wantsTrainer"
+                  name="wantsTrainer"
+                  value={formData.wantsTrainer}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
             </div>
 
             {/* Password */}

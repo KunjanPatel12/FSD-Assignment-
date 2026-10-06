@@ -142,7 +142,7 @@ export const generateToken = (user) => {
  * CRITICAL SECURITY:
  * Force role = 'member' on the backend regardless of payload input.
  */
-export const registerMember = async ({ fullName, email, phone, password, age, height, weight, fitnessGoal, experienceLevel, plannedDaysPerWeek }) => {
+export const registerMember = async ({ fullName, email, phone, password, age, height, weight, fitnessGoal, experienceLevel, plannedDaysPerWeek, preferredSchedule, wantsTrainer }) => {
   const normalizedEmail = (email || '').toLowerCase().trim();
 
   // Check duplicate email in Mongo or in-memory
@@ -186,6 +186,8 @@ export const registerMember = async ({ fullName, email, phone, password, age, he
       fitnessGoal: fitnessGoal || 'muscle_gain',
       experienceLevel: experienceLevel || 'beginner',
       plannedDaysPerWeek: plannedDaysPerWeek || 5,
+      preferredSchedule: preferredSchedule || 'morning',
+      wantsTrainer: wantsTrainer || false,
     });
   } else {
     savedUser = {

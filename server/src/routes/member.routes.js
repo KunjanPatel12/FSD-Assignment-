@@ -11,6 +11,8 @@ import {
   getConsistencyReport,
   getMemberProfile,
   updateMemberProfile,
+  simulateMembershipPayment,
+  createCustomWorkoutPlan,
 } from '../controllers/member.controller.js';
 import { protect, requireActiveMembership } from '../middleware/auth.middleware.js';
 
@@ -25,6 +27,9 @@ router.get('/dashboard', getDashboard);
 router.get('/profile', getMemberProfile);
 router.put('/profile', updateMemberProfile);
 
+// Membership Routes
+router.post('/membership/pay', simulateMembershipPayment);
+
 // Member Consistency Report route
 router.get('/consistency', requireActiveMembership, getConsistencyReport);
 
@@ -35,6 +40,7 @@ router.post('/attendance/check-out', requireActiveMembership, checkOut);
 
 // Member Workout Plan routes
 router.get('/workout-plan', requireActiveMembership, getWorkoutPlan);
+router.post('/workout-plan', requireActiveMembership, createCustomWorkoutPlan);
 router.post('/workout-plan/generate', requireActiveMembership, generateWorkoutPlan);
 router.patch('/workout-plan/day/:dayNumber/toggle-complete', requireActiveMembership, toggleDayCompletion);
 router.put('/fitness-profile', updateFitnessProfile);

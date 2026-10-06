@@ -120,6 +120,9 @@ export const getMemberDashboardData = async (userId) => {
       email: user.email,
       role: user.role,
     },
+    membership: {
+      status: profile.membershipStatus || 'Pending',
+    },
     currentGoal: profile.fitnessGoal,
     fitnessLevel: profile.experienceLevel,
     plannedWorkoutDays: plannedDays,
@@ -141,33 +144,10 @@ export const getMemberWorkoutPlan = async (userId) => {
     });
   }
 
-  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
-  // Check if plan needs initial generation or refresh (never overwrite custom/trainer plans)
-  const isTrainerAssigned = Boolean(plan?.isCustom || plan?.assignedBy);
-  const needsRegen = !isTrainerAssigned && (!plan || !plan.days || plan.days.length === 0);
-  if (needsRegen) {
-    const generated = generateRuleBasedPlan({
-      fitnessGoal: profile.fitnessGoal,
-      experienceLevel: profile.experienceLevel,
-      plannedDaysPerWeek: profile.plannedDaysPerWeek || 5,
-    });
-
-    if (plan) {
-      plan.name = generated.name;
-      plan.goal = generated.goal;
-      plan.experienceLevel = generated.experienceLevel;
-      plan.daysPerWeek = generated.daysPerWeek;
-      plan.days = generated.days;
-      await plan.save();
-    } else {
-      plan = await WorkoutPlan.create({
-        userId,
-        ...generated,
-      });
-    }
-  }
-
-  return { plan, profile };
+  let recommendedPlan = await WorkoutPlan.findOne({ userId, planType: 'recommended' });
+  let customPlan = await WorkoutPlan.findOne({ userId, planType: 'custom' });
+  // Do not auto-generate plan anymore. Let the frontend show Option 1 vs Option 2.
+  return { recommendedPlan, customPlan, profile };
 };
 
 export const updateMemberFitnessProfile = async (userId, updateData) => {
@@ -190,7 +170,7 @@ export const updateMemberFitnessProfile = async (userId, updateData) => {
     plannedDaysPerWeek: profile.plannedDaysPerWeek,
   });
 
-  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  let plan = await WorkoutPlan.findOne({ userId, planType: 'recommended' });
   if (plan) {
     plan.name = generated.name;
     plan.goal = generated.goal;
@@ -201,6 +181,7 @@ export const updateMemberFitnessProfile = async (userId, updateData) => {
   } else {
     plan = await WorkoutPlan.create({
       userId,
+      planType: 'recommended',
       ...generated,
     });
   }
@@ -231,7 +212,7 @@ export const regenerateMemberWorkoutPlan = async (userId, overrides = {}) => {
     plannedDaysPerWeek: profile.plannedDaysPerWeek,
   });
 
-  let plan = await WorkoutPlan.findOne({ userId, isActive: true });
+  let plan = await WorkoutPlan.findOne({ userId, planType: 'recommended' });
   if (plan) {
     plan.name = generated.name;
     plan.goal = generated.goal;
@@ -242,6 +223,7 @@ export const regenerateMemberWorkoutPlan = async (userId, overrides = {}) => {
   } else {
     plan = await WorkoutPlan.create({
       userId,
+      planType: 'recommended',
       ...generated,
     });
   }
@@ -249,8 +231,14 @@ export const regenerateMemberWorkoutPlan = async (userId, overrides = {}) => {
   return { plan, profile };
 };
 
-export const toggleWorkoutDayCompletion = async (userId, dayNumber) => {
-  const plan = await WorkoutPlan.findOne({ userId, isActive: true });
+export const toggleWorkoutDayCompletion = async (userId, dayNumber, planId) => {
+  const query = { userId };
+  if (planId) {
+    query._id = planId;
+  } else {
+    query.isActive = true; // fallback
+  }
+  const plan = await WorkoutPlan.findOne(query);
   if (!plan) {
     throw new Error('Active workout plan not found');
   }
@@ -595,9 +583,9 @@ export const getMemberFullProfile = async (userId) => {
       experienceLevel: 'intermediate',
       plannedDaysPerWeek: 5,
       preferredSchedule: 'morning',
-      membershipPlan: 'FitPulse Annual Pro',
-      membershipStatus: 'Active',
-      membershipExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      membershipPlan: null,
+      membershipStatus: 'Pending',
+      membershipExpiry: null,
     });
   }
 
@@ -610,9 +598,9 @@ export const getMemberFullProfile = async (userId) => {
       memberSince: user.createdAt,
     },
     membership: {
-      plan: profile.membershipPlan || 'FitPulse Annual Pro',
-      status: profile.membershipStatus || 'Active',
-      expiryDate: profile.membershipExpiry || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      plan: profile.membershipPlan || 'None',
+      status: profile.membershipStatus || 'Pending',
+      expiryDate: profile.membershipExpiry || null,
     },
     fitness: {
       age: profile.age || 25,
@@ -643,6 +631,11 @@ export const updateMemberFullProfile = async (userId, data) => {
       user.fullName = data.fullName.trim();
     }
     if (data.phone && typeof data.phone === 'string' && data.phone.trim()) {
+      if (!/^\d{10}$/.test(data.phone.trim())) {
+        const error = new Error('Phone number must be exactly 10 digits (numbers only)');
+        error.statusCode = 400;
+        throw error;
+      }
       user.phone = data.phone.trim();
     }
     await user.save();
@@ -694,11 +687,63 @@ export const updateMemberFullProfile = async (userId, data) => {
     profile.preferredSchedule = data.preferredSchedule;
   }
 
+  if (data.wantsTrainer !== undefined && data.wantsTrainer !== null) {
+    profile.wantsTrainer = Boolean(data.wantsTrainer);
+  }
+
   await profile.save();
 
   return await getMemberFullProfile(userId);
 };
 
+export const simulatePaymentService = async (userId, data) => {
+  let profile = await FitnessProfile.findOne({ userId });
+  if (!profile) {
+    profile = await FitnessProfile.create({ userId });
+  }
 
+  const { planName, durationMonths, amount } = data;
+  const expiryDate = new Date();
+  expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
 
+  profile.membershipPlan = planName;
+  profile.membershipStatus = 'Active';
+  profile.membershipExpiry = expiryDate;
 
+  await profile.save();
+
+  return {
+    membershipPlan: profile.membershipPlan,
+    membershipStatus: profile.membershipStatus,
+    membershipExpiry: profile.membershipExpiry,
+    amountPaid: amount,
+  };
+};
+
+export const createMemberCustomWorkoutPlan = async (userId, planData) => {
+  const { name, daysPerWeek, days } = planData;
+  let plan = await WorkoutPlan.findOne({ userId, planType: 'custom' });
+  if (plan) {
+    plan.name = name || 'My Custom Plan';
+    plan.goal = 'custom';
+    plan.experienceLevel = 'custom';
+    plan.daysPerWeek = daysPerWeek || days.length;
+    plan.days = days;
+    plan.isCustom = true;
+    plan.planType = 'custom';
+    plan.assignedBy = null;
+    await plan.save();
+  } else {
+    plan = await WorkoutPlan.create({
+      userId,
+      name: name || 'My Custom Plan',
+      goal: 'custom',
+      experienceLevel: 'custom',
+      daysPerWeek: daysPerWeek || days.length,
+      days,
+      isCustom: true,
+      planType: 'custom',
+    });
+  }
+  return { plan };
+};
