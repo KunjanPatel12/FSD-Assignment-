@@ -11,8 +11,21 @@ import { getTodayGymStatus } from './services/schedule.service.js';
 const app = express();
 
 // Middlewares
+const clientUrl = process.env.CLIENT_URL;
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      !clientUrl ||
+      origin === clientUrl ||
+      origin === 'http://localhost:5173' ||
+      origin === 'http://localhost:3000' ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 app.use(express.json());
