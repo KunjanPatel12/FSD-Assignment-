@@ -8,7 +8,7 @@ import {
 
 export const register = async (req, res, next) => {
   try {
-    const { fullName, email, phone, password, confirmPassword, age, height, weight, fitnessGoal, experienceLevel, plannedDaysPerWeek, preferredSchedule, wantsTrainer } = req.body;
+    const { fullName, email, phone, password, confirmPassword, age, height, weight, fitnessGoal, experienceLevel, plannedDaysPerWeek, preferredSchedule, wantsTrainer, trainerRequested } = req.body;
 
     // Validate required fields
     if (!fullName || !fullName.trim()) {
@@ -85,6 +85,7 @@ export const register = async (req, res, next) => {
       plannedDaysPerWeek,
       preferredSchedule,
       wantsTrainer,
+      trainerRequested,
     });
 
     return res.status(201).json({

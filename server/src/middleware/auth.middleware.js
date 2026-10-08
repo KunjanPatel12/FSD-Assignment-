@@ -53,14 +53,32 @@ export const requireActiveMembership = async (req, res, next) => {
 
     if (getDBStatus().isConnected) {
       const profile = await FitnessProfile.findOne({ userId: req.user.id });
-      if (!profile || profile.membershipStatus !== 'Active') {
+      if (!profile) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Access Denied: You need an active membership to use this feature.',
+        });
+      }
+
+      const now = new Date();
+      if (profile.membershipExpiry && new Date(profile.membershipExpiry) <= now) {
+        if (profile.membershipStatus === 'Active') {
+          profile.membershipStatus = 'Expired';
+          await profile.save();
+        }
+        return res.status(403).json({
+          status: 'error',
+          message: 'Access Denied: Your membership has expired. Please renew your membership to continue.',
+        });
+      }
+
+      if (profile.membershipStatus !== 'Active') {
         return res.status(403).json({
           status: 'error',
           message: 'Access Denied: You need an active membership to use this feature.',
         });
       }
     }
-    // If not connected to DB, we skip or assume active in memory fallback (for demo simplicity)
     
     next();
   } catch (error) {

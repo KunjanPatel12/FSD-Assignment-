@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NoticeBanner from './NoticeBanner';
 
 function RegisterPage({ onNavigate, onAuthSuccess }) {
   const [formData, setFormData] = useState({
@@ -125,9 +126,12 @@ function RegisterPage({ onNavigate, onAuthSuccess }) {
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-5 p-3 rounded-md bg-red-50 border border-red-200 text-xs text-red-700">
-              <span className="font-semibold">Error:</span> {error}
-            </div>
+            <NoticeBanner
+              variant="error"
+              title="Registration Error"
+              message={error}
+              className="mb-5"
+            />
           )}
 
           {/* Form */}
