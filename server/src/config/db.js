@@ -1,5 +1,11 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+
+// Ensure Node's DNS resolver can query MongoDB Atlas SRV records on Windows
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {}
 
 let isConnected = false;
 let memoryServer = null;
